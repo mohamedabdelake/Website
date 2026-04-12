@@ -2,324 +2,700 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SONIC CARD</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>SONIC | NextGen Developer Portfolio</title>
 
+<!-- Fonts & Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
 <style>
-:root{
-  --primary:#007BFF; /* اللون الأزرق */
-  --secondary:#0f0f0f;
-  --accent:#00BFFF; /* أزرق فاتح كـ accent */
-  --glass:rgba(255,255,255,.05);
-} 
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-*{box-sizing:border-box;margin:0;padding:0;}
+  :root {
+    --primary: #007BFF;
+    --primary-glow: #00BFFF;
+    --dark-bg: #0a0a0f;
+    --glass-bg: rgba(15, 25, 45, 0.55);
+    --glass-border: rgba(0, 123, 255, 0.3);
+    --card-radius: 2rem;
+    --transition-smooth: cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  }
 
-body{
-  font-family:'Cairo',sans-serif;
-  background:var(--secondary);
-  color:#fff;
-  text-align:center;
-  overflow-x:hidden;
-}
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--dark-bg);
+    color: #ffffff;
+    overflow-x: hidden;
+    text-align: center;
+    scroll-behavior: smooth;
+  }
 
-/* فيديو خلفية */
-#bg-video{
-  position:fixed;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  filter:brightness(.3) contrast(1.2);
-  z-index:-3;
-}
+  /* Custom cursor glow */
+  body {
+    cursor: default;
+  }
+  .cursor-glow {
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle, rgba(0,123,255,0.6), transparent);
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.05s linear;
+    opacity: 0.7;
+  }
 
-body::after{
-  content:"";
-  position:fixed;
-  inset:0;
-  background:linear-gradient(180deg,rgba(0,0,0,.6),#000);
-  z-index:-2;
-}
+  /* Background video + overlay */
+  #bg-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.25) contrast(1.2) blur(2px);
+    z-index: -4;
+  }
+  .overlay-dark {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 20% 30%, rgba(0,0,0,0.7), #03030a);
+    z-index: -3;
+  }
 
-/* canvas نجوم */
-canvas{
-  position:fixed;
-  inset:0;
-  z-index:-1;
-}
+  /* Advanced Particle Canvas */
+  #particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+  }
 
-/* المحتوى الرئيسي */
-#content{
-  max-width:1000px;
-  margin:auto;
-  padding:100px 20px;
-}
+  /* Main container */
+  .main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 70px 24px 100px;
+    position: relative;
+    z-index: 2;
+  }
 
-/* صورة البروفايل */
-.profile-pic{
-  width:220px;
-  height:220px;
-  margin:auto;
-  border-radius:50%;
-  padding:10px;
-  background:var(--primary);
-  box-shadow:0 0 40px var(--primary),0 0 80px var(--accent);
-  transition:0.5s;
-}
+  /* Profile section with 3D / rotate effect */
+  .profile-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  .profile-pic {
+    width: 210px;
+    height: 210px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-glow));
+    padding: 4px;
+    animation: borderPulse 3s infinite alternate;
+    transition: transform 0.4s var(--transition-smooth);
+    box-shadow: 0 0 40px rgba(0, 123, 255, 0.5);
+  }
+  .profile-pic:hover {
+    transform: scale(1.05) rotate(2deg);
+    box-shadow: 0 0 70px rgba(0, 191, 255, 0.8);
+  }
+  .profile-pic img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #111;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  @keyframes borderPulse {
+    0% { box-shadow: 0 0 15px var(--primary); }
+    100% { box-shadow: 0 0 50px var(--primary-glow); }
+  }
 
-.profile-pic:hover{
-  transform:scale(1.1);
-  box-shadow:0 0 80px var(--primary),0 0 150px var(--accent);
-}
+  /* Typography */
+  h1 {
+    font-size: 3.8rem;
+    font-weight: 900;
+    margin: 28px 0 12px;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #ffffff, #90e0ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 20px rgba(0,123,255,0.4);
+  }
+  h1 span {
+    background: linear-gradient(135deg, var(--primary), var(--primary-glow));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+    animation: glowText 2s infinite;
+  }
+  @keyframes glowText {
+    0% { text-shadow: 0 0 0px var(--primary);}
+    100% { text-shadow: 0 0 12px var(--primary-glow);}
+  }
 
-.profile-pic img{
-  width:100%;
-  height:100%;
-  border-radius:50%;
-  object-fit:cover;
-  background:#111;
-}
+  .description {
+    font-size: 1.25rem;
+    color: #e0e0e0;
+    line-height: 1.8;
+    background: rgba(0,0,0,0.3);
+    display: inline-block;
+    padding: 8px 28px;
+    border-radius: 60px;
+    backdrop-filter: blur(6px);
+    margin-bottom: 25px;
+  }
 
-/* العنوان */
-h1{
-  margin:30px 0 15px;
-  font-size:3.8em;
-  font-weight:900;
-  letter-spacing:4px;
-  color:#fff;
-}
+  /* Music Button with equalizer animation */
+  .music-area {
+    margin: 20px 0;
+  }
+  .music-btn {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(0, 123, 255, 0.1);
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    font-size: 34px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 0 20px var(--primary);
+    backdrop-filter: blur(8px);
+  }
+  .music-btn:hover {
+    background: var(--primary);
+    color: #000;
+    transform: scale(1.1);
+    box-shadow: 0 0 50px var(--primary-glow);
+  }
+  .playing-animation {
+    animation: pulseRing 1.2s infinite;
+  }
+  @keyframes pulseRing {
+    0% { box-shadow: 0 0 0 0 rgba(0, 191, 255, 0.6);}
+    100% { box-shadow: 0 0 0 15px rgba(0, 191, 255, 0);}
+  }
 
-h1 span{
-  color:var(--primary);
-  text-shadow:0 0 25px var(--primary),0 0 50px var(--accent);
-}
+  /* Social Buttons Grid */
+  .buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+    margin: 45px 0 35px;
+  }
+  .btn {
+    background: rgba(20, 30, 55, 0.65);
+    backdrop-filter: blur(12px);
+    padding: 16px 32px;
+    border-radius: 60px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #fff;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(0, 123, 255, 0.5);
+    transition: all 0.3s var(--transition-smooth);
+    letter-spacing: 0.5px;
+  }
+  .btn i {
+    font-size: 1.4rem;
+    color: var(--primary);
+    transition: 0.2s;
+  }
+  .btn:hover {
+    background: var(--primary);
+    transform: translateY(-6px) scale(1.03);
+    border-color: white;
+    box-shadow: 0 15px 30px rgba(0, 123, 255, 0.4);
+  }
+  .btn:hover i {
+    color: white;
+  }
 
-/* الوصف */
-.description{
-  font-size:1.2em;
-  color:#ccc;
-  line-height:2;
-  margin-bottom:40px;
-}
+  /* Stats Cards */
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 35px;
+    flex-wrap: wrap;
+    margin: 30px 0 50px;
+  }
+  .stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-radius: 32px;
+    padding: 20px 32px;
+    min-width: 150px;
+    border: 1px solid var(--glass-border);
+    transition: 0.3s;
+  }
+  .stat-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--primary);
+    box-shadow: 0 15px 35px rgba(0,123,255,0.3);
+  }
+  .stat-number {
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: var(--primary-glow);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    color: #ccc;
+  }
 
-/* زر تشغيل الموسيقى */
-.music-btn{
-  width:80px;
-  height:80px;
-  border-radius:50%;
-  border:2px solid var(--primary);
-  background:transparent;
-  color:var(--primary);
-  font-size:28px;
-  cursor:pointer;
-  margin:30px auto;
-  box-shadow:0 0 40px var(--primary);
-  transition:.3s;
-}
+  /* Skills section enhanced */
+  .skills {
+    background: rgba(10, 20, 35, 0.6);
+    backdrop-filter: blur(14px);
+    border-radius: 48px;
+    padding: 45px 35px;
+    margin-top: 30px;
+    border: 1px solid rgba(0, 123, 255, 0.3);
+    transition: 0.4s;
+  }
+  .skills h2 {
+    font-size: 2.3rem;
+    font-weight: 900;
+    margin-bottom: 30px;
+    color: var(--primary);
+    display: inline-block;
+    border-bottom: 3px solid var(--primary-glow);
+    padding-bottom: 8px;
+  }
+  .skill-item {
+    margin: 28px 0;
+  }
+  .skill-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .skill-name i {
+    margin-left: 10px;
+    color: var(--primary);
+  }
+  .skill-percent {
+    color: var(--primary-glow);
+  }
+  .skill-bar-bg {
+    height: 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 30px;
+    overflow: hidden;
+  }
+  .skill-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-glow));
+    border-radius: 30px;
+    transition: width 1.2s var(--transition-smooth);
+    box-shadow: 0 0 5px var(--primary);
+  }
 
-.music-btn:hover{
-  background:var(--primary);
-  color:#000;
-  box-shadow:0 0 70px var(--accent);
-}
+  /* Channel Button (fixed) */
+  .channel-btn {
+    position: fixed;
+    bottom: 28px;
+    left: 28px;
+    background: linear-gradient(120deg, var(--primary), #0056b3);
+    padding: 14px 28px;
+    border-radius: 60px;
+    color: white;
+    font-weight: 800;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
+    box-shadow: 0 0 20px rgba(0,123,255,0.6);
+    transition: 0.3s;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .channel-btn:hover {
+    transform: scale(1.05);
+    background: var(--primary-glow);
+    box-shadow: 0 0 35px var(--primary-glow);
+    color: #000;
+  }
 
-/* الأزرار الرئيسية */
-.buttons{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:25px;
-  margin:50px 0;
-}
+  /* footer */
+  .footer-note {
+    margin-top: 60px;
+    font-size: 0.8rem;
+    color: #aaa;
+    border-top: 1px dashed rgba(0,123,255,0.3);
+    padding-top: 30px;
+  }
 
-.btn{
-  padding:18px;
-  border-radius:25px;
-  background:var(--glass);
-  color:#fff;
-  font-weight:800;
-  text-decoration:none;
-  box-shadow:0 0 30px rgba(139,49,199,.4);
-  transition:.4s;
-}
+  /* Responsive */
+  @media (max-width: 700px) {
+    h1 { font-size: 2.4rem; }
+    .profile-pic { width: 150px; height: 150px; }
+    .btn { padding: 12px 20px; font-size: 0.9rem;}
+    .stat-number { font-size: 2rem; }
+    .skills { padding: 30px 20px; }
+    .channel-btn { padding: 8px 18px; bottom: 18px; left: 18px; font-size: 0.8rem;}
+  }
 
-.btn i{
-  margin-left:10px;
-  color:var(--primary);
-}
-
-.btn:hover{
-  background:var(--primary);
-  color:#000;
-  transform:translateY(-8px) scale(1.05);
-}
-
-.btn:hover i{color:#000}
-
-/* المهارات */
-.skills{
-  margin-top:60px;
-  padding:40px;
-  border-radius:35px;
-  background:var(--glass);
-}
-
-.skills h2{
-  margin-bottom:30px;
-  font-weight:900;
-  color:var(--primary);
-}
-
-.skill-container{
-  margin:20px 0;
-}
-
-.skill-container .name{
-  display:block;
-  margin-bottom:8px;
-  color:#fff;
-}
-
-.skill-bar{
-  height:20px;
-  background:rgba(255,255,255,.1);
-  border-radius:25px;
-  overflow:hidden;
-}
-
-.skill-bar span{
-  display:block;
-  height:100%;
-  width:0;
-  background:linear-gradient(90deg,var(--primary),var(--accent));
-  transition:2s;
-}
-
-/* زر القناة */
-.channel-btn{
-  position:fixed;
-  bottom:30px;
-  left:30px;
-  padding:18px 30px;
-  border-radius:50px;
-  background:var(--primary);
-  color:#000;
-  font-weight:800;
-  text-decoration:none;
-  box-shadow:0 0 40px var(--accent);
-  z-index:10;
-  transition:.3s;
-}
-
-.channel-btn:hover{
-  background:var(--accent);
-  box-shadow:0 0 70px var(--accent);
-}
+  /* floating shapes */
+  .floating-shape {
+    position: fixed;
+    background: radial-gradient(circle, rgba(0,123,255,0.15), transparent);
+    border-radius: 50%;
+    filter: blur(60px);
+    z-index: -1;
+    pointer-events: none;
+  }
 </style>
 </head>
-
 <body>
 
+<div class="cursor-glow" id="cursorGlow"></div>
 <video id="bg-video" autoplay muted loop playsinline>
   <source src="https://files.catbox.moe/vtom19.mp4">
 </video>
+<div class="overlay-dark"></div>
+<canvas id="particle-canvas"></canvas>
 
-<canvas id="particles"></canvas>
+<div class="floating-shape" style="width: 300px; height: 300px; top: 10%; left: -100px;"></div>
+<div class="floating-shape" style="width: 500px; height: 500px; bottom: 0%; right: -150px;"></div>
 
-<audio id="music" src="https://files.catbox.moe/9fyuwb.m4a"></audio>
+<audio id="bg-music" loop preload="auto">
+  <source src="https://files.catbox.moe/9fyuwb.m4a">
+</audio>
 
-<div id="content">
-
-  <div class="profile-pic">
-    <img src="main.jpg" alt="7ARB">
+<div class="main-container">
+  <div class="profile-wrapper">
+    <div class="profile-pic">
+      <img src="main.jpg" alt="SONIC Developer" onerror="this.src='https://placehold.co/400/0a0a2a/00BFFF?text=SONIC'">
+    </div>
   </div>
 
   <h1>SONIC <span>DEVELOPER</span></h1>
-
   <p class="description">
-    مطور بوتات واتساب 🤖 </br> 
-Full Stack Web | Bot Engineer
+    <i class="fas fa-robot"></i> مطور بوتات واتساب محترف | <i class="fas fa-code"></i> Full Stack Web
   </p>
 
-  <button class="music-btn" id="musicBtn">
-    <i class="fas fa-play"></i>
-  </button>
+  <div class="music-area">
+    <button class="music-btn" id="musicToggleBtn">
+      <i class="fas fa-play" id="musicIcon"></i>
+    </button>
+  </div>
 
   <div class="buttons">
-    <a class="btn" href="https://wa.me/212698078610"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-    <a class="btn" href="https://t.me/b9_db"><i class="fab fa-telegram"></i> Telegram</a>
+    <a class="btn" href="https://wa.me/212698078610" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+    <a class="btn" href="https://t.me/b9_db" target="_blank" rel="noopener"><i class="fab fa-telegram"></i> Telegram</a>
   </div>
 
+  <!-- Dynamic Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-number" id="projectCount">0</div>
+      <div class="stat-label">مشاريع منجزة</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="clientCount">0</div>
+      <div class="stat-label">عميل سعيد</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">24/7</div>
+      <div class="stat-label">الدعم الفني</div>
+    </div>
+  </div>
+
+  <!-- Skills Section (Enhanced) -->
   <div class="skills">
-    <h2>My Skills</h2>
-
-    <div class="skill-container">
-      <span class="name">JavaScript</span>
-      <div class="skill-bar"><span data-width="90%"></span></div>
+    <h2><i class="fas fa-cogs"></i> المهارات التقنية</h2>
+    
+    <div class="skill-item">
+      <div class="skill-header"><span class="skill-name"><i class="fab fa-js"></i> JavaScript (ES6+)</span><span class="skill-percent">90%</span></div>
+      <div class="skill-bar-bg"><div class="skill-bar-fill" data-skill="90"></div></div>
     </div>
-
-    <div class="skill-container">
-      <span class="name">Python</span>
-      <div class="skill-bar"><span data-width="45%"></span></div>
+    <div class="skill-item">
+      <div class="skill-header"><span class="skill-name"><i class="fab fa-python"></i> Python / Bot Dev</span><span class="skill-percent">75%</span></div>
+      <div class="skill-bar-bg"><div class="skill-bar-fill" data-skill="75"></div></div>
     </div>
-
-    <div class="skill-container">
-      <span class="name">HTML & CSS</span>
-      <div class="skill-bar"><span data-width="75%"></span></div>
+    <div class="skill-item">
+      <div class="skill-header"><span class="skill-name"><i class="fab fa-html5"></i> HTML5 & CSS3</span><span class="skill-percent">95%</span></div>
+      <div class="skill-bar-bg"><div class="skill-bar-fill" data-skill="95"></div></div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-header"><span class="skill-name"><i class="fab fa-node-js"></i> Node.js / Express</span><span class="skill-percent">85%</span></div>
+      <div class="skill-bar-bg"><div class="skill-bar-fill" data-skill="85"></div></div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-header"><span class="skill-name"><i class="fas fa-database"></i> MongoDB / Firebase</span><span class="skill-percent">70%</span></div>
+      <div class="skill-bar-bg"><div class="skill-bar-fill" data-skill="70"></div></div>
     </div>
   </div>
-
+  <div class="footer-note">
+    <i class="fas fa-bolt"></i> SONIC CODE | innovate • create • dominate
+  </div>
 </div>
 
-<a href="https://whatsapp.com/channel/0029VbC9jBa7oQhlrjUPKa33" class="channel-btn">
-  <i class="fab fa-whatsapp"></i> My Channel
+<a href="https://whatsapp.com/channel/0029VbC9jBa7oQhlrjUPKa33" target="_blank" class="channel-btn">
+  <i class="fab fa-whatsapp"></i> قناتي الرسمية
 </a>
 
 <script>
-/* موسيقى */
-const music=document.getElementById("music");
-const btn=document.getElementById("musicBtn");
-const icon=btn.querySelector("i");
-btn.onclick=()=>{
-  if(music.paused){
-    music.play();
-    icon.className="fas fa-pause";
-  }else{
-    music.pause();
-    icon.className="fas fa-play";
-  }
-};
-
-/* particles */
-const canvas=document.getElementById("particles");
-const ctx=canvas.getContext("2d");
-let particles=[];
-function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
-resize();addEventListener("resize",resize);
-
-for(let i=0;i<180;i++){
-  particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2,s:Math.random()*0.8});
-}
-
-(function animate(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  particles.forEach(p=>{
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    ctx.fillStyle="rgba(255,255,255,0.8)";
-    ctx.fill();
-    p.y+=p.s;
-    if(p.y>canvas.height){p.y=0;p.x=Math.random()*canvas.width;}
-  });
-  requestAnimationFrame(animate);
-})();
-
-/* المهارات */
-document.querySelectorAll(".skill-bar span").forEach(e=>setTimeout(()=>e.style.width=e.dataset.width,500));
+  (function() {
+    // ---------- ENHANCED INTERACTIVE PARTICLE NETWORK ----------
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let particles = [];
+    let mouse = { x: null, y: null, radius: 120 };
+    
+    function resizeCanvas() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      initParticles(150);
+    }
+    
+    function initParticles(count) {
+      particles = [];
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          radius: Math.random() * 2.5 + 1,
+          baseX: Math.random() * width,
+          baseY: Math.random() * height,
+          speedX: (Math.random() - 0.5) * 0.3,
+          speedY: (Math.random() - 0.5) * 0.2,
+          color: `rgba(0, ${Math.floor(150 + Math.random() * 105)}, 255, ${Math.random() * 0.5 + 0.3})`
+        });
+      }
+    }
+    
+    function drawLines() {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 120) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(0, 160, 255, ${0.2 * (1 - distance / 120)})`;
+            ctx.lineWidth = 0.8;
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+    
+    function handleMouseInteraction() {
+      for (let p of particles) {
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < mouse.radius) {
+          const force = (mouse.radius - dist) / mouse.radius;
+          const angle = Math.atan2(dy, dx);
+          const moveX = Math.cos(angle) * force * 2.2;
+          const moveY = Math.sin(angle) * force * 2.2;
+          p.x -= moveX;
+          p.y -= moveY;
+        }
+      }
+    }
+    
+    function animateParticles() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, width, height);
+      for (let p of particles) {
+        // drift and edge bounce
+        p.x += p.speedX;
+        p.y += p.speedY;
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+        
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      if (mouse.x && mouse.y) handleMouseInteraction();
+      drawLines();
+      requestAnimationFrame(animateParticles);
+    }
+    
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+    });
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+    window.addEventListener('mouseleave', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+    resizeCanvas();
+    animateParticles();
+    
+    // ---------- Music Controls with Visual Feedback ----------
+    const music = document.getElementById('bg-music');
+    const musicBtn = document.getElementById('musicToggleBtn');
+    const musicIcon = document.getElementById('musicIcon');
+    let isPlaying = false;
+    
+    musicBtn.addEventListener('click', () => {
+      if (music.paused) {
+        music.play().catch(e => console.log("autoplay blocked, user interaction works"));
+        musicIcon.className = 'fas fa-pause';
+        musicBtn.classList.add('playing-animation');
+        isPlaying = true;
+      } else {
+        music.pause();
+        musicIcon.className = 'fas fa-play';
+        musicBtn.classList.remove('playing-animation');
+        isPlaying = false;
+      }
+    });
+    
+    // Optional: when music ends, reset button
+    music.addEventListener('ended', () => {
+      musicIcon.className = 'fas fa-play';
+      musicBtn.classList.remove('playing-animation');
+      isPlaying = false;
+    });
+    
+    // ---------- Animated Counter (Projects & Clients) ----------
+    function animateNumber(element, start, end, duration) {
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const currentValue = Math.floor(progress * (end - start) + start);
+        element.innerText = currentValue;
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        } else {
+          element.innerText = end;
+        }
+      };
+      window.requestAnimationFrame(step);
+    }
+    
+    const projectElem = document.getElementById('projectCount');
+    const clientElem = document.getElementById('clientCount');
+    // start counters when visible
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          if (entry.target.id === 'projectCount' && projectElem.innerText === '0') {
+            animateNumber(projectElem, 0, 28, 1500);
+          }
+          if (entry.target.id === 'clientCount' && clientElem.innerText === '0') {
+            animateNumber(clientElem, 0, 19, 1500);
+          }
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    observer.observe(projectElem);
+    observer.observe(clientElem);
+    
+    // ---------- SKILL BARS WITH SCROLL TRIGGER ----------
+    const skillBars = document.querySelectorAll('.skill-bar-fill');
+    function triggerSkillBars() {
+      skillBars.forEach(bar => {
+        const percent = bar.getAttribute('data-skill');
+        if (percent && bar.style.width !== percent + '%') {
+          const rect = bar.getBoundingClientRect();
+          if (rect.top < window.innerHeight - 100) {
+            bar.style.width = percent + '%';
+          }
+        }
+      });
+    }
+    // initial check + scroll listener
+    window.addEventListener('scroll', triggerSkillBars);
+    window.addEventListener('load', () => {
+      setTimeout(triggerSkillBars, 400);
+    });
+    triggerSkillBars();
+    
+    // ---------- Custom Glow Cursor ----------
+    const cursorGlow = document.getElementById('cursorGlow');
+    document.addEventListener('mousemove', (e) => {
+      cursorGlow.style.left = e.clientX + 'px';
+      cursorGlow.style.top = e.clientY + 'px';
+    });
+    
+    // ---------- Hover effect on buttons to enlarge cursor glow ----------
+    const allBtns = document.querySelectorAll('.btn, .channel-btn, .music-btn');
+    allBtns.forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        cursorGlow.style.width = '55px';
+        cursorGlow.style.height = '55px';
+        cursorGlow.style.opacity = '0.9';
+        cursorGlow.style.background = 'radial-gradient(circle, rgba(0,191,255,0.8), transparent)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        cursorGlow.style.width = '30px';
+        cursorGlow.style.height = '30px';
+        cursorGlow.style.opacity = '0.6';
+        cursorGlow.style.background = 'radial-gradient(circle, rgba(0,123,255,0.6), transparent)';
+      });
+    });
+    
+    // add pulsing ring animation for music if already playing? not needed
+    
+    // additional fallback for video loading, ensure background stable
+    const videoBg = document.getElementById('bg-video');
+    if (videoBg) {
+      videoBg.playbackRate = 0.9;
+    }
+    
+    // Optional: make profile image glow on error fallback
+    const profileImg = document.querySelector('.profile-pic img');
+    if (profileImg && profileImg.complete && profileImg.naturalWidth === 0) {
+      profileImg.style.background = '#0a1a2a';
+    }
+    
+    // for extra smoothness, add window load class
+    window.addEventListener('load', () => {
+      document.body.style.opacity = '1';
+      triggerSkillBars();
+    });
+  })();
 </script>
-
 </body>
 </html>
