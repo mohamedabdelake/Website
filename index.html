@@ -1,2340 +1,680 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SONIC BOT MD | مطور بوتات واتساب</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<title>LoRa Track — Smart Bus Tracking System</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════
-   RESET & ROOT VARIABLES
-   ═══════════════════════════════════════ */
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --primary:#00b4ff;
-  --primary-rgb:0,180,255;
-  --primary-dim:rgba(0,180,255,0.12);
-  --primary-glow:rgba(0,180,255,0.08);
-  --secondary:#0077dd;
-  --accent:#00d4ff;
-  --neon:#00e5ff;
-  --bg:#020810;
-  --bg-elevated:#071525;
-  --card:rgba(8,20,38,0.75);
-  --card-solid:#081428;
-  --border:rgba(0,180,255,0.1);
-  --border-hover:rgba(0,180,255,0.35);
-  --text:#d8ecff;
-  --text-dim:#5a8aaa;
-  --text-muted:#2a5570;
-  --radius-sm:10px;
-  --radius-md:16px;
-  --radius-lg:24px;
-  --radius-xl:32px;
-  --shadow-sm:0 2px 8px rgba(0,0,0,0.3);
-  --shadow-md:0 8px 32px rgba(0,0,0,0.4);
-  --shadow-lg:0 20px 60px rgba(0,0,0,0.5);
-  --shadow-glow:0 0 40px rgba(var(--primary-rgb),0.1);
-}
-html{scroll-behavior:smooth;font-size:16px}
-body{
-  font-family:'Cairo',sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  overflow-x:hidden;
-  line-height:1.7;
-  cursor:default;
-}
-
-/* ═══════════════════════════════════════
-   LOADING SCREEN
-   ═══════════════════════════════════════ */
-.loader-screen{
-  position:fixed;inset:0;z-index:10000;
-  background:var(--bg);
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  transition:opacity .6s ease,visibility .6s ease;
-}
-.loader-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
-.loader-logo{
-  font-size:2.2rem;font-weight:900;
-  color:var(--primary);
-  text-shadow:0 0 30px rgba(var(--primary-rgb),0.5);
-  margin-bottom:30px;letter-spacing:3px;
-  display:flex;align-items:center;gap:12px;
-}
-.loader-logo i{font-size:1.6rem;animation:spin 2s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loader-logo span{color:var(--text)}
-.loader-bar-track{
-  width:220px;height:4px;
-  background:var(--border);border-radius:10px;
-  overflow:hidden;
-}
-.loader-bar-fill{
-  height:100%;width:0;
-  background:linear-gradient(90deg,var(--secondary),var(--primary),var(--neon));
-  border-radius:10px;
-  animation:loaderFill 1.8s ease-in-out forwards;
-  box-shadow:0 0 15px rgba(var(--primary-rgb),0.5);
-}
-@keyframes loaderFill{
-  0%{width:0}40%{width:60%}80%{width:90%}100%{width:100%}
-}
-.loader-text{
-  margin-top:16px;font-size:.75rem;
-  color:var(--text-dim);letter-spacing:2px;
-}
-.loader-dots::after{content:"";animation:dots 1.5s steps(4) infinite}
-@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
-
-/* ═══════════════════════════════════════
-   CUSTOM CURSOR
-   ═══════════════════════════════════════ */
-.cursor-dot{
-  position:fixed;width:8px;height:8px;
-  background:var(--primary);border-radius:50%;
-  pointer-events:none;z-index:9999;
-  transition:transform .15s ease;
-  mix-blend-mode:difference;
-}
-.cursor-ring{
-  position:fixed;width:40px;height:40px;
-  border:1.5px solid rgba(var(--primary-rgb),0.4);
-  border-radius:50%;pointer-events:none;z-index:9998;
-  transition:transform .3s ease,width .3s ease,height .3s ease,
-  border-color .3s ease;
-  transform:translate(-50%,-50%);
-}
-.cursor-ring.hover{width:60px;height:60px;border-color:var(--neon)}
-
-/* ═══════════════════════════════════════
-   CANVAS PARTICLE BG
-   ═══════════════════════════════════════ */
-#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
-
-/* ═══════════════════════════════════════
-   GLOW ORBS
-   ═══════════════════════════════════════ */
-.glow-orb{
-  position:fixed;border-radius:50%;
-  filter:blur(120px);pointer-events:none;z-index:0;
-}
-.glow-orb.g1{
-  width:700px;height:700px;
-  background:radial-gradient(circle,rgba(var(--primary-rgb),0.07),transparent 70%);
-  top:-15%;right:-15%;
-  animation:orbDrift 25s ease-in-out infinite;
-}
-.glow-orb.g2{
-  width:500px;height:500px;
-  background:radial-gradient(circle,rgba(var(--primary-rgb),0.05),transparent 70%);
-  bottom:5%;left:-10%;
-  animation:orbDrift 20s ease-in-out infinite reverse;
-}
-.glow-orb.g3{
-  width:350px;height:350px;
-  background:radial-gradient(circle,rgba(var(--primary-rgb),0.04),transparent 70%);
-  top:40%;left:40%;
-  animation:orbPulse 10s ease-in-out infinite;
-}
-@keyframes orbDrift{
-  0%,100%{transform:translate(0,0)}
-  25%{transform:translate(40px,-50px)}
-  50%{transform:translate(-30px,40px)}
-  75%{transform:translate(50px,20px)}
-}
-@keyframes orbPulse{
-  0%,100%{opacity:.4;transform:scale(1)}
-  50%{opacity:.8;transform:scale(1.4)}
-}
-
-/* ═══════════════════════════════════════
-   NOISE TEXTURE
-   ═══════════════════════════════════════ */
-body::after{
-  content:"";position:fixed;inset:0;z-index:1;
-  pointer-events:none;opacity:.3;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-}
-
-/* ═══════════════════════════════════════
-   PAGE WRAPPER
-   ═══════════════════════════════════════ */
-.page{position:relative;z-index:2}
-
-/* ═══════════════════════════════════════
-   NAVBAR
-   ═══════════════════════════════════════ */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:100;
-  padding:18px 40px;
-  display:flex;align-items:center;justify-content:space-between;
-  background:rgba(2,8,16,0.6);
-  backdrop-filter:blur(24px);
-  -webkit-backdrop-filter:blur(24px);
-  border-bottom:1px solid var(--border);
-  transition:all .4s cubic-bezier(.22,1,.36,1);
-}
-nav.scrolled{
-  padding:12px 40px;
-  background:rgba(2,8,16,0.92);
-  box-shadow:0 4px 30px rgba(0,0,0,0.5);
-}
-.nav-logo{
-  font-size:1.35rem;font-weight:900;
-  color:var(--primary);
-  text-shadow:0 0 25px rgba(var(--primary-rgb),0.4);
-  letter-spacing:2px;
-  display:flex;align-items:center;gap:10px;
-}
-.nav-logo .logo-icon{
-  width:36px;height:36px;border-radius:var(--radius-sm);
-  background:var(--primary-dim);
-  border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  font-size:.9rem;
-}
-.nav-logo span{color:var(--text)}
-.nav-links{display:flex;gap:4px;align-items:center}
-.nav-links a{
-  color:var(--text-dim);text-decoration:none;
-  padding:8px 18px;border-radius:50px;
-  font-size:.82rem;font-weight:600;
-  transition:all .3s;position:relative;
-}
-.nav-links a:hover,.nav-links a.active{
-  color:var(--primary);
-  background:var(--primary-dim);
-}
-.nav-cta{
-  padding:8px 22px!important;
-  background:var(--primary)!important;
-  color:#000!important;font-weight:700!important;
-  border-radius:50px!important;
-}
-.nav-cta:hover{
-  box-shadow:0 0 25px rgba(var(--primary-rgb),0.4)!important;
-  transform:translateY(-2px);
-}
-
-/* Mobile Menu Toggle */
-.menu-toggle{
-  display:none;
-  flex-direction:column;gap:5px;
-  cursor:pointer;padding:8px;z-index:110;
-  background:none;border:none;
-}
-.menu-toggle span{
-  display:block;width:26px;height:2px;
-  background:var(--text);border-radius:4px;
-  transition:all .3s;
-}
-.menu-toggle.active span:nth-child(1){
-  transform:rotate(45deg) translate(5px,5px);
-  background:var(--primary);
-}
-.menu-toggle.active span:nth-child(2){opacity:0}
-.menu-toggle.active span:nth-child(3){
-  transform:rotate(-45deg) translate(5px,-5px);
-  background:var(--primary);
-}
-
-/* Mobile Menu Overlay */
-.mobile-menu{
-  display:none;position:fixed;inset:0;z-index:99;
-  background:rgba(2,8,16,0.97);
-  backdrop-filter:blur(30px);
-  flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:12px;opacity:0;visibility:hidden;
-  transition:all .4s;
-}
-.mobile-menu.open{opacity:1;visibility:visible}
-.mobile-menu a{
-  color:var(--text);text-decoration:none;
-  font-size:1.3rem;font-weight:700;
-  padding:12px 40px;border-radius:var(--radius-md);
-  transition:all .3s;
-}
-.mobile-menu a:hover{color:var(--primary);background:var(--primary-dim)}
-
-/* ═══════════════════════════════════════
-   HERO SECTION
-   ═══════════════════════════════════════ */
-.hero{
-  min-height:100vh;
-  display:flex;align-items:center;justify-content:center;
-  padding:140px 20px 100px;
-  position:relative;
-}
-.hero-inner{text-align:center;max-width:780px}
-
-/* Avatar */
-.avatar-wrap{
-  position:relative;
-  width:200px;height:200px;
-  margin:0 auto 36px;
-  animation:fadeUp .9s ease both;
-}
-.avatar-ring-outer{
-  position:absolute;inset:-8px;border-radius:50%;
-  background:conic-gradient(
-    from 0deg,
-    var(--primary),
-    transparent 30%,
-    var(--accent) 50%,
-    transparent 80%,
-    var(--neon)
-  );
-  animation:ringRotate 5s linear infinite;
-  opacity:.7;
-}
-.avatar-ring-outer::after{
-  content:"";position:absolute;inset:4px;
-  border-radius:50%;background:var(--bg);
-}
-@keyframes ringRotate{to{transform:rotate(360deg)}}
-.avatar-ring-inner{
-  position:absolute;inset:-3px;border-radius:50%;
-  border:2px dashed rgba(var(--primary-rgb),0.2);
-  animation:ringRotate 15s linear infinite reverse;
-}
-.avatar-img{
-  position:relative;z-index:2;
-  width:100%;height:100%;
-  border-radius:50%;object-fit:cover;
-  border:5px solid var(--bg);
-}
-.avatar-status{
-  position:absolute;bottom:14px;right:14px;z-index:3;
-  width:26px;height:26px;border-radius:50%;
-  background:var(--primary);
-  border:4px solid var(--bg);
-  box-shadow:0 0 15px var(--primary);
-  animation:statusPulse 2.5s ease-in-out infinite;
-}
-@keyframes statusPulse{
-  0%,100%{box-shadow:0 0 15px var(--primary)}
-  50%{box-shadow:0 0 30px var(--primary),0 0 60px rgba(var(--primary-rgb),0.2)}
-}
-.avatar-badge{
-  position:absolute;top:-4px;left:50%;transform:translateX(-50%);z-index:3;
-  background:var(--primary);color:#000;
-  font-size:.6rem;font-weight:900;
-  padding:3px 10px;border-radius:50px;
-  letter-spacing:1px;
-  box-shadow:0 2px 10px rgba(var(--primary-rgb),0.4);
-}
-
-/* Hero Badge */
-.hero-badge{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:7px 20px;border-radius:50px;
-  background:var(--primary-dim);
-  border:1px solid var(--border);
-  font-size:.78rem;color:var(--primary);
-  font-weight:600;margin-bottom:28px;
-  animation:fadeUp .9s ease .1s both;
-}
-.hero-badge .dot{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--primary);
-  animation:blink 1.5s step-end infinite;
-}
-@keyframes blink{50%{opacity:0}}
-
-/* Hero Title */
-.hero h1{
-  font-size:clamp(2.8rem,7vw,5rem);
-  font-weight:900;line-height:1.05;
-  margin-bottom:12px;
-  animation:fadeUp .9s ease .2s both;
-}
-.hero h1 .blue{
-  color:var(--primary);
-  text-shadow:0 0 40px rgba(var(--primary-rgb),0.3),
-  0 0 80px rgba(var(--primary-rgb),0.1);
-}
-.hero h1 .md{
-  font-size:.5em;vertical-align:super;
-  color:var(--text-dim);font-weight:600;
-  margin-right:4px;
-}
-
-/* Typing subtitle */
-.hero-subtitle{
-  font-size:clamp(1rem,2.5vw,1.25rem);
-  color:var(--text-dim);font-weight:300;
-  margin-bottom:40px;
-  animation:fadeUp .9s ease .3s both;
-  min-height:2em;
-}
-.hero-subtitle .typed-text{color:var(--text);font-weight:700}
-.hero-subtitle .cursor-blink{
-  display:inline-block;width:2px;height:1.2em;
-  background:var(--primary);vertical-align:middle;
-  margin-right:4px;
-  animation:cursorBlink .8s step-end infinite;
-}
-@keyframes cursorBlink{50%{opacity:0}}
-
-/* CTA Row */
-.cta-row{
-  display:flex;flex-wrap:wrap;gap:14px;
-  justify-content:center;
-  animation:fadeUp .9s ease .4s both;
-}
-
-/* Buttons */
-.btn-primary{
-  display:inline-flex;align-items:center;gap:10px;
-  padding:15px 34px;border-radius:var(--radius-md);
-  background:var(--primary);color:#000;
-  text-decoration:none;font-weight:800;
-  font-size:.95rem;border:none;cursor:pointer;
-  transition:all .35s;position:relative;overflow:hidden;
-}
-.btn-primary::before{
-  content:"";position:absolute;inset:0;
-  background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);
-  transform:translateX(-120%);
-  transition:transform .7s;
-}
-.btn-primary:hover::before{transform:translateX(120%)}
-.btn-primary:hover{
-  transform:translateY(-4px);
-  box-shadow:0 12px 40px rgba(var(--primary-rgb),0.35),
-  0 0 80px rgba(var(--primary-rgb),0.15);
-}
-.btn-primary:active{transform:translateY(-1px)}
-
-.btn-ghost{
-  display:inline-flex;align-items:center;gap:10px;
-  padding:15px 34px;border-radius:var(--radius-md);
-  background:transparent;color:var(--text);
-  text-decoration:none;font-weight:700;
-  font-size:.95rem;
-  border:1.5px solid var(--border-hover);
-  cursor:pointer;transition:all .35s;
-}
-.btn-ghost:hover{
-  background:var(--primary-dim);
-  border-color:var(--primary);
-  color:var(--primary);transform:translateY(-4px);
-  box-shadow:0 8px 30px rgba(var(--primary-rgb),0.1);
-}
-
-/* Social Row */
-.social-row{
-  display:flex;gap:12px;justify-content:center;
-  margin-top:36px;
-  animation:fadeUp .9s ease .5s both;
-}
-.social-icon{
-  width:44px;height:44px;border-radius:var(--radius-sm);
-  background:var(--card);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--text-dim);text-decoration:none;
-  font-size:1rem;transition:all .3s;
-}
-.social-icon:hover{
-  color:var(--primary);border-color:var(--primary);
-  background:var(--primary-dim);
-  transform:translateY(-4px);
-  box-shadow:var(--shadow-glow);
-}
-
-/* Scroll Hint */
-.scroll-hint{
-  position:absolute;bottom:40px;left:50%;
-  transform:translateX(-50%);
-  display:flex;flex-direction:column;
-  align-items:center;gap:8px;
-  color:var(--text-muted);font-size:.7rem;
-  letter-spacing:2px;
-  animation:fadeUp 1s ease .7s both;
-}
-.scroll-mouse{
-  width:22px;height:36px;border-radius:11px;
-  border:2px solid var(--text-muted);
-  position:relative;
-}
-.scroll-mouse::after{
-  content:"";position:absolute;top:6px;left:50%;
-  transform:translateX(-50%);
-  width:3px;height:8px;border-radius:3px;
-  background:var(--primary);
-  animation:scrollDot 2s ease-in-out infinite;
-}
-@keyframes scrollDot{
-  0%{opacity:1;transform:translateX(-50%) translateY(0)}
-  100%{opacity:0;transform:translateX(-50%) translateY(16px)}
-}
-
-/* ═══════════════════════════════════════
-   SECTION COMMON
-   ═══════════════════════════════════════ */
-section{
-  padding:100px 24px;
-  max-width:1100px;margin:0 auto;
-}
-.section-tag{
-  display:inline-flex;align-items:center;gap:8px;
-  font-size:.7rem;font-weight:800;
-  letter-spacing:4px;text-transform:uppercase;
-  color:var(--primary);margin-bottom:14px;
-}
-.section-tag::before,.section-tag::after{
-  content:"";width:30px;height:1px;
-  background:linear-gradient(90deg,var(--primary),transparent);
-  opacity:.4;
-}
-.section-tag::after{
-  background:linear-gradient(270deg,var(--primary),transparent);
-}
-.section-title{
-  font-size:clamp(1.8rem,4vw,2.8rem);
-  font-weight:900;margin-bottom:16px;
-  line-height:1.15;
-}
-.section-desc{
-  color:var(--text-dim);max-width:550px;
-  font-size:.95rem;margin-bottom:50px;
-  line-height:1.8;
-}
-
-/* ═══════════════════════════════════════
-   ABOUT SECTION
-   ═══════════════════════════════════════ */
-.about-grid{
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:50px;align-items:center;
-}
-.about-image{
-  position:relative;border-radius:var(--radius-xl);
-  overflow:hidden;
-}
-.about-image img{
-  width:100%;border-radius:var(--radius-xl);
-  display:block;aspect-ratio:1;object-fit:cover;
-  border:1px solid var(--border);
-}
-.about-image::after{
-  content:"";position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(var(--primary-rgb),0.1),transparent);
-  border-radius:var(--radius-xl);
-}
-.about-image .float-card{
-  position:absolute;bottom:20px;right:20px;
-  background:var(--card);
-  backdrop-filter:blur(20px);
-  border:1px solid var(--border);
-  border-radius:var(--radius-md);
-  padding:14px 20px;
-  display:flex;align-items:center;gap:12px;
-  animation:floatY 3s ease-in-out infinite;
-}
-@keyframes floatY{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-8px)}
-}
-.float-card .fc-icon{
-  width:40px;height:40px;border-radius:var(--radius-sm);
-  background:var(--primary);color:#000;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1rem;
-}
-.float-card .fc-text{font-size:.8rem;font-weight:700}
-.float-card .fc-sub{font-size:.7rem;color:var(--text-dim)}
-
-.about-content h3{
-  font-size:1.1rem;color:var(--primary);
-  font-weight:700;margin-bottom:16px;
-}
-.about-content p{
-  color:var(--text-dim);margin-bottom:20px;
-  font-size:.92rem;line-height:1.9;
-}
-.about-highlights{
-  display:grid;grid-template-columns:1fr 1fr;gap:12px;
-  margin-bottom:28px;
-}
-.highlight-item{
-  display:flex;align-items:center;gap:10px;
-  font-size:.85rem;font-weight:600;
-}
-.highlight-item i{
-  color:var(--primary);font-size:.75rem;
-  width:24px;height:24px;border-radius:6px;
-  background:var(--primary-dim);
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
-
-/* ═══════════════════════════════════════
-   STATS SECTION
-   ═══════════════════════════════════════ */
-.stats-section{
-  max-width:100%;padding:80px 24px;
-  background:linear-gradient(180deg,transparent,rgba(var(--primary-rgb),0.02),transparent);
-}
-.stats-inner{max-width:1100px;margin:0 auto}
-.stats-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:20px;
-}
-.stat-card{
-  background:var(--card);
-  backdrop-filter:blur(16px);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:36px 20px;text-align:center;
-  transition:all .4s;position:relative;overflow:hidden;
-}
-.stat-card::before{
-  content:"";position:absolute;top:0;left:50%;
-  transform:translateX(-50%);
-  width:50px;height:2px;
-  background:linear-gradient(90deg,transparent,var(--primary),transparent);
-  transition:width .4s;
-}
-.stat-card:hover{
-  border-color:var(--border-hover);
-  transform:translateY(-8px);
-  box-shadow:var(--shadow-glow);
-}
-.stat-card:hover::before{width:80%}
-.stat-icon{font-size:1.5rem;color:var(--primary);opacity:.25;margin-bottom:16px}
-.stat-num{
-  font-size:2.6rem;font-weight:900;
-  color:var(--primary);
-  text-shadow:0 0 30px rgba(var(--primary-rgb),0.2);
-  line-height:1;margin-bottom:6px;
-  font-variant-numeric:tabular-nums;
-}
-.stat-label{font-size:.85rem;color:var(--text-dim);font-weight:600}
-
-/* ═══════════════════════════════════════
-   BOT FEATURES (MD Specific)
-   ═══════════════════════════════════════ */
-.bot-features-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
-}
-.bot-feature{
-  background:var(--card);
-  backdrop-filter:blur(16px);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:32px 24px;
-  transition:all .4s;position:relative;
-}
-.bot-feature::after{
-  content:"";position:absolute;inset:0;
-  border-radius:var(--radius-lg);
-  background:linear-gradient(135deg,rgba(var(--primary-rgb),0.05),transparent);
-  opacity:0;transition:opacity .4s;
-}
-.bot-feature:hover{
-  border-color:var(--border-hover);
-  transform:translateY(-6px);
-  box-shadow:var(--shadow-glow);
-}
-.bot-feature:hover::after{opacity:1}
-.bf-header{
-  display:flex;align-items:center;gap:14px;
-  margin-bottom:16px;position:relative;z-index:1;
-}
-.bf-icon{
-  width:48px;height:48px;border-radius:var(--radius-md);
-  background:linear-gradient(135deg,var(--primary-dim),rgba(var(--primary-rgb),0.03));
-  border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.15rem;color:var(--primary);
-  transition:all .4s;flex-shrink:0;
-}
-.bot-feature:hover .bf-icon{
-  background:var(--primary);color:#000;
-  box-shadow:0 0 25px rgba(var(--primary-rgb),0.3);
-  transform:scale(1.05) rotate(-3deg);
-}
-.bf-header h3{font-size:1rem;font-weight:800}
-.bot-feature p{
-  font-size:.84rem;color:var(--text-dim);
-  line-height:1.8;position:relative;z-index:1;
-}
-
-/* ═══════════════════════════════════════
-   SKILLS SECTION
-   ═══════════════════════════════════════ */
-.skills-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:20px;
-}
-.skill-card{
-  background:var(--card);
-  backdrop-filter:blur(16px);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:28px;transition:all .4s;
-}
-.skill-card:hover{
-  border-color:var(--border-hover);
-  transform:translateY(-4px);
-  box-shadow:var(--shadow-glow);
-}
-.skill-header{
-  display:flex;justify-content:space-between;
-  align-items:center;margin-bottom:14px;
-}
-.skill-name{
-  display:flex;align-items:center;gap:12px;
-  font-weight:700;font-size:.92rem;
-}
-.skill-icon-box{
-  width:38px;height:38px;border-radius:var(--radius-sm);
-  background:var(--primary-dim);
-  border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--primary);font-size:.85rem;flex-shrink:0;
-}
-.skill-pct{
-  font-size:.82rem;font-weight:800;
-  color:var(--primary);
-  font-variant-numeric:tabular-nums;
-}
-.skill-track{
-  height:8px;background:var(--bg-elevated);
-  border-radius:10px;overflow:hidden;
-  position:relative;
-}
-.skill-fill{
-  height:100%;border-radius:10px;
-  background:linear-gradient(90deg,var(--secondary),var(--primary));
-  box-shadow:0 0 14px rgba(var(--primary-rgb),0.2);
-  width:0;transition:width 1.8s cubic-bezier(.22,1,.36,1);
-  position:relative;
-}
-.skill-fill::after{
-  content:"";position:absolute;
-  right:0;top:50%;transform:translateY(-50%);
-  width:14px;height:14px;border-radius:50%;
-  background:var(--primary);
-  box-shadow:0 0 10px var(--primary);
-  opacity:0;transition:opacity .3s .8s;
-}
-.skill-fill.animated::after{opacity:1}
-
-/* ═══════════════════════════════════════
-   COMMANDS PREVIEW
-   ═══════════════════════════════════════ */
-.commands-preview{
-  background:var(--card-solid);
-  border:1px solid var(--border);
-  border-radius:var(--radius-xl);
-  overflow:hidden;
-}
-.commands-header{
-  display:flex;align-items:center;gap:12px;
-  padding:16px 24px;
-  background:rgba(var(--primary-rgb),0.03);
-  border-bottom:1px solid var(--border);
-}
-.commands-dots{display:flex;gap:6px}
-.commands-dots span{width:10px;height:10px;border-radius:50%}
-.commands-dots span:nth-child(1){background:#ff5f57}
-.commands-dots span:nth-child(2){background:#febc2e}
-.commands-dots span:nth-child(3){background:#28c840}
-.commands-title-bar{
-  flex:1;text-align:center;
-  font-size:.8rem;color:var(--text-dim);font-weight:600;
-}
-.commands-body{
-  padding:24px;
-  max-height:420px;overflow-y:auto;
-  font-family:'Courier New',monospace;
-  font-size:.82rem;line-height:2;
-  direction:ltr;text-align:left;
-}
-.cmd-line{display:flex;gap:12px}
-.cmd-prefix{
-  color:var(--primary);font-weight:700;
-  flex-shrink:0;user-select:none;
-}
-.cmd-text{color:var(--text-dim)}
-.cmd-comment{color:var(--text-muted);font-style:italic}
-.cmd-highlight{color:#ffcc00}
-
-/* ═══════════════════════════════════════
-   PROJECTS SECTION
-   ═══════════════════════════════════════ */
-.projects-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
-}
-.project-card{
-  background:var(--card);
-  backdrop-filter:blur(16px);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  overflow:hidden;transition:all .4s;
-}
-.project-card:hover{
-  border-color:var(--border-hover);
-  transform:translateY(-6px);
-  box-shadow:var(--shadow-glow);
-}
-.project-thumb{
-  width:100%;height:180px;
-  background:linear-gradient(135deg,var(--bg-elevated),rgba(var(--primary-rgb),0.05));
-  display:flex;align-items:center;justify-content:center;
-  font-size:3rem;color:rgba(var(--primary-rgb),0.15);
-  position:relative;overflow:hidden;
-}
-.project-thumb::after{
-  content:"";position:absolute;inset:0;
-  background:linear-gradient(to top,var(--card-solid),transparent 60%);
-}
-.project-info{padding:24px}
-.project-info h3{font-size:1.05rem;font-weight:800;margin-bottom:8px}
-.project-info p{
-  font-size:.82rem;color:var(--text-dim);
-  line-height:1.7;margin-bottom:16px;
-}
-.project-tags{display:flex;flex-wrap:wrap;gap:6px}
-.project-tag{
-  font-size:.68rem;font-weight:700;
-  padding:4px 12px;border-radius:50px;
-  background:var(--primary-dim);
-  color:var(--primary);
-  border:1px solid var(--border);
-}
-.project-opensource{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:.75rem;font-weight:700;
-  color:var(--neon);margin-top:12px;
-}
-
-/* ═══════════════════════════════════════
-   OPEN SOURCE SECTION
-   ═══════════════════════════════════════ */
-.opensource-banner{
-  max-width:100%;padding:60px 24px;
-  background:linear-gradient(135deg,rgba(var(--primary-rgb),0.03),rgba(0,119,221,0.03));
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-}
-.opensource-inner{
-  max-width:900px;margin:0 auto;text-align:center;
-}
-.os-icon{
-  width:80px;height:80px;border-radius:50%;
-  background:var(--primary-dim);
-  border:2px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto 24px;font-size:2rem;
-  color:var(--primary);
-  animation:floatY 3s ease-in-out infinite;
-}
-.os-title{
-  font-size:clamp(1.5rem,3vw,2.2rem);
-  font-weight:900;margin-bottom:16px;
-}
-.os-desc{
-  color:var(--text-dim);font-size:1rem;
-  line-height:1.9;max-width:600px;
-  margin:0 auto 30px;
-}
-.os-repos{
-  display:flex;flex-wrap:wrap;gap:16px;
-  justify-content:center;
-}
-.os-repo{
-  display:inline-flex;align-items:center;gap:10px;
-  padding:12px 24px;border-radius:var(--radius-md);
-  background:var(--card);
-  border:1px solid var(--border);
-  color:var(--text);text-decoration:none;
-  font-weight:700;font-size:.9rem;
-  transition:all .3s;
-}
-.os-repo i{color:var(--primary)}
-.os-repo:hover{
-  border-color:var(--primary);
-  background:var(--primary-dim);
-  transform:translateY(-3px);
-  box-shadow:var(--shadow-glow);
-}
-
-/* ═══════════════════════════════════════
-   TESTIMONIALS
-   ═══════════════════════════════════════ */
-.testimonials-track{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
-}
-.testimonial-card{
-  background:var(--card);
-  backdrop-filter:blur(16px);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:28px;transition:all .4s;
-}
-.testimonial-card:hover{
-  border-color:var(--border-hover);
-  transform:translateY(-4px);
-}
-.testi-stars{
-  color:#ffcc00;font-size:.75rem;
-  margin-bottom:14px;letter-spacing:2px;
-}
-.testi-text{
-  font-size:.88rem;color:var(--text-dim);
-  line-height:1.9;margin-bottom:20px;
-  font-style:italic;
-}
-.testi-author{display:flex;align-items:center;gap:12px}
-.testi-avatar{
-  width:40px;height:40px;border-radius:50%;
-  background:var(--primary-dim);
-  border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--primary);font-weight:900;font-size:.85rem;
-}
-.testi-name{font-size:.85rem;font-weight:700}
-.testi-role{font-size:.72rem;color:var(--text-dim)}
-
-/* ═══════════════════════════════════════
-   SERVICES SECTION
-   ═══════════════════════════════════════ */
-.services-grid{
-  display:grid;grid-template-columns:repeat(2,1fr);gap:20px;
-}
-.service-card{
-  background:var(--card);
-  backdrop-filter:blur(16px);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:32px;
-  display:flex;gap:20px;
-  transition:all .4s;
-}
-.service-card:hover{
-  border-color:var(--border-hover);
-  transform:translateY(-4px);
-  box-shadow:var(--shadow-glow);
-}
-.svc-icon{
-  width:52px;height:52px;border-radius:var(--radius-md);
-  background:linear-gradient(135deg,var(--primary-dim),rgba(var(--primary-rgb),0.03));
-  border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.2rem;color:var(--primary);
-  flex-shrink:0;transition:all .4s;
-}
-.service-card:hover .svc-icon{
-  background:var(--primary);color:#000;
-  box-shadow:0 0 25px rgba(var(--primary-rgb),0.3);
-}
-.svc-content h3{font-size:1rem;font-weight:800;margin-bottom:8px}
-.svc-content p{font-size:.84rem;color:var(--text-dim);line-height:1.8}
-
-/* ═══════════════════════════════════════
-   FAQ SECTION
-   ═══════════════════════════════════════ */
-.faq-list{display:flex;flex-direction:column;gap:12px}
-.faq-item{
-  background:var(--card);
-  backdrop-filter:blur(16px);
-  border:1px solid var(--border);
-  border-radius:var(--radius-md);
-  overflow:hidden;transition:border-color .3s;
-}
-.faq-item.open{border-color:var(--border-hover)}
-.faq-question{
-  width:100%;padding:20px 24px;
-  background:none;border:none;
-  color:var(--text);font-family:'Cairo',sans-serif;
-  font-size:.92rem;font-weight:700;
-  display:flex;justify-content:space-between;
-  align-items:center;cursor:pointer;
-  transition:color .3s;text-align:right;
-}
-.faq-question:hover{color:var(--primary)}
-.faq-question i{
-  color:var(--primary);font-size:.75rem;
-  transition:transform .3s;flex-shrink:0;
-  margin-right:12px;
-}
-.faq-item.open .faq-question i{transform:rotate(180deg)}
-.faq-answer{
-  max-height:0;overflow:hidden;
-  transition:max-height .4s cubic-bezier(.22,1,.36,1),padding .4s;
-}
-.faq-item.open .faq-answer{max-height:300px}
-.faq-answer-inner{
-  padding:0 24px 20px;
-  font-size:.85rem;color:var(--text-dim);
-  line-height:1.9;
-}
-
-/* ═══════════════════════════════════════
-   CONTACT SECTION
-   ═══════════════════════════════════════ */
-.contact-section{max-width:100%;padding:100px 24px}
-.contact-inner{max-width:1100px;margin:0 auto}
-.contact-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:40px;
-}
-.contact-info{display:flex;flex-direction:column;gap:20px}
-.contact-item{
-  display:flex;align-items:center;gap:16px;
-  padding:20px;border-radius:var(--radius-md);
-  background:var(--card);
-  border:1px solid var(--border);
-  transition:all .3s;
-}
-.contact-item:hover{
-  border-color:var(--border-hover);
-  transform:translateX(-4px);
-}
-.ci-icon{
-  width:48px;height:48px;border-radius:var(--radius-sm);
-  background:var(--primary-dim);
-  border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--primary);font-size:1.1rem;flex-shrink:0;
-}
-.ci-label{font-size:.75rem;color:var(--text-dim);font-weight:600}
-.ci-value{font-size:.92rem;font-weight:700}
-
-.contact-form-wrap{
-  background:var(--card);
-  backdrop-filter:blur(16px);
-  border:1px solid var(--border);
-  border-radius:var(--radius-xl);
-  padding:36px;
-}
-.form-group{margin-bottom:18px}
-.form-group label{
-  display:block;font-size:.8rem;font-weight:700;
-  margin-bottom:8px;color:var(--text-dim);
-}
-.form-group input,.form-group textarea{
-  width:100%;padding:14px 18px;
-  background:var(--bg-elevated);
-  border:1.5px solid var(--border);
-  border-radius:var(--radius-sm);
-  color:var(--text);font-family:'Cairo',sans-serif;
-  font-size:.9rem;transition:all .3s;outline:none;
-}
-.form-group input:focus,.form-group textarea:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 3px rgba(var(--primary-rgb),0.1);
-}
-.form-group textarea{min-height:120px;resize:vertical}
-.form-submit{
-  width:100%;padding:15px;
-  background:var(--primary);color:#000;
-  border:none;border-radius:var(--radius-sm);
-  font-family:'Cairo',sans-serif;
-  font-size:.95rem;font-weight:800;
-  cursor:pointer;transition:all .3s;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-}
-.form-submit:hover{
-  box-shadow:0 10px 35px rgba(var(--primary-rgb),0.3);
-  transform:translateY(-3px);
-}
-
-/* Toast */
-.toast{
-  position:fixed;bottom:30px;left:50%;
-  transform:translateX(-50%) translateY(100px);
-  background:var(--card-solid);
-  border:1px solid var(--primary);
-  border-radius:var(--radius-md);
-  padding:14px 28px;
-  font-size:.88rem;font-weight:700;
-  color:var(--primary);
-  box-shadow:0 10px 40px rgba(var(--primary-rgb),0.2);
-  z-index:10000;
-  transition:transform .5s cubic-bezier(.22,1,.36,1);
-  display:flex;align-items:center;gap:10px;
-}
-.toast.show{transform:translateX(-50%) translateY(0)}
-
-/* ═══════════════════════════════════════
-   FOOTER
-   ═══════════════════════════════════════ */
-footer{
-  border-top:1px solid var(--border);
-  padding:60px 24px 30px;
-  text-align:center;
-}
-.footer-inner{max-width:1100px;margin:0 auto}
-.footer-top{
-  display:flex;justify-content:space-between;
-  align-items:center;margin-bottom:40px;
-  flex-wrap:wrap;gap:20px;
-}
-.footer-logo{
-  font-size:1.3rem;font-weight:900;
-  color:var(--primary);letter-spacing:2px;
-}
-.footer-logo span{color:var(--text)}
-.footer-links{display:flex;gap:6px;flex-wrap:wrap}
-.footer-links a{
-  color:var(--text-dim);text-decoration:none;
-  font-size:.82rem;font-weight:600;
-  padding:6px 14px;border-radius:50px;
-  transition:all .3s;
-}
-.footer-links a:hover{color:var(--primary);background:var(--primary-dim)}
-.footer-divider{
-  height:1px;
-  background:linear-gradient(90deg,transparent,var(--border),transparent);
-  margin-bottom:24px;
-}
-.footer-bottom{
-  display:flex;justify-content:space-between;
-  align-items:center;flex-wrap:wrap;gap:12px;
-}
-.footer-copy{font-size:.8rem;color:var(--text-muted)}
-.footer-copy span{color:var(--primary);font-weight:700}
-.footer-socials{display:flex;gap:10px}
-.footer-socials a{
-  width:36px;height:36px;border-radius:var(--radius-sm);
-  background:var(--card);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--text-dim);text-decoration:none;
-  font-size:.85rem;transition:all .3s;
-}
-.footer-socials a:hover{
-  color:var(--primary);border-color:var(--primary);
-  transform:translateY(-3px);
-}
-
-/* ═══════════════════════════════════════
-   REVEAL ANIMATION
-   ═══════════════════════════════════════ */
-.reveal{
-  opacity:0;transform:translateY(45px);
-  transition:opacity .8s cubic-bezier(.22,1,.36,1),
-  transform .8s cubic-bezier(.22,1,.36,1);
-}
-.reveal.visible{opacity:1;transform:translateY(0)}
-.reveal-delay-1{transition-delay:.1s}
-.reveal-delay-2{transition-delay:.2s}
-.reveal-delay-3{transition-delay:.3s}
-.reveal-delay-4{transition-delay:.4s}
-.reveal-delay-5{transition-delay:.5s}
-
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(30px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-/* ═══════════════════════════════════════
-   SCROLLBAR
-   ═══════════════════════════════════════ */
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{
-  background:rgba(var(--primary-rgb),0.2);border-radius:10px;
-}
-::-webkit-scrollbar-thumb:hover{
-  background:rgba(var(--primary-rgb),0.4);
-}
-
-/* ═══════════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════════ */
-@media(max-width:900px){
-  .about-grid{grid-template-columns:1fr}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .bot-features-grid{grid-template-columns:1fr 1fr}
-  .projects-grid{grid-template-columns:1fr 1fr}
-  .testimonials-track{grid-template-columns:1fr}
-  .services-grid{grid-template-columns:1fr}
-  .contact-grid{grid-template-columns:1fr}
-  .footer-top{flex-direction:column;text-align:center}
-  .footer-bottom{flex-direction:column;text-align:center}
-}
-@media(max-width:640px){
-  nav{padding:14px 16px}
-  .nav-links{display:none}
-  .menu-toggle{display:flex}
-  .mobile-menu{display:flex}
-  .stats-grid{grid-template-columns:1fr}
-  .bot-features-grid{grid-template-columns:1fr}
-  .skills-grid{grid-template-columns:1fr}
-  .projects-grid{grid-template-columns:1fr}
-  .hero h1{font-size:2.2rem}
-  .avatar-wrap{width:150px;height:150px}
-  section{padding:60px 16px}
-  .contact-form-wrap{padding:24px}
-  .footer-links{justify-content:center}
-  .os-repos{flex-direction:column;align-items:center}
-}
-
-/* ═══════════════════════════════════════
-   SELECTION STYLE
-   ═══════════════════════════════════════ */
-::selection{
-  background:rgba(var(--primary-rgb),0.3);
-  color:#fff;
-}
+:root{--bg:#03060f;--blue:#2563eb;--blue-l:#3b82f6;--blue-xl:#60a5fa;--cyan:#06b6d4;--cyan-l:#22d3ee;--white:#f0f6ff;--muted:#7aa0cc;--border:rgba(37,99,235,.18);--border2:rgba(37,99,235,.08);--glow:rgba(37,99,235,.35);--radius:14px;--font:'IBM Plex Sans Arabic',sans-serif;--mono:'Space Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font);background:var(--bg);color:var(--white);overflow:hidden;height:100vh;width:100vw}
+::selection{background:rgba(37,99,235,.4);color:#fff}
+.bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+.bg-aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.au1{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.12) 0%,transparent 70%);top:-200px;right:-150px;animation:drift1 12s ease-in-out infinite}
+.au2{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.08) 0%,transparent 70%);bottom:-200px;left:-100px;animation:drift2 15s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-40px) scale(1.05)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,30px) scale(1.08)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes slideL{from{opacity:0;transform:translateX(-60px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideR{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes busMove{0%{transform:translateX(-6px)}50%{transform:translateX(6px)}100%{transform:translateX(-6px)}}
+@keyframes signalSend{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
+@keyframes glow-pulse{0%,100%{box-shadow:0 0 20px rgba(37,99,235,.2)}50%{box-shadow:0 0 40px rgba(37,99,235,.4)}}
+.deck{position:relative;width:100%;height:100%}
+.slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .55s ease,visibility .55s ease;overflow:hidden;z-index:1}
+.slide.active{opacity:1;visibility:visible;z-index:2}
+.slide.active .a-up{animation:fadeUp .75s cubic-bezier(.16,1,.3,1) both}
+.slide.active .a-fade{animation:fadeIn .75s ease both}
+.slide.active .a-scale{animation:scaleIn .75s cubic-bezier(.16,1,.3,1) both}
+.slide.active .a-left{animation:slideL .75s cubic-bezier(.16,1,.3,1) both}
+.slide.active .a-right{animation:slideR .75s cubic-bezier(.16,1,.3,1) both}
+.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}.d4{animation-delay:.4s}.d5{animation-delay:.5s}.d6{animation-delay:.6s}.d7{animation-delay:.7s}.d8{animation-delay:.8s}.d9{animation-delay:.9s}.d10{animation-delay:1s}
+.card{background:rgba(6,12,26,.7);border:1px solid var(--border);border-radius:var(--radius);transition:all .4s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(37,99,235,.4),transparent);opacity:0;transition:opacity .4s}
+.card:hover{border-color:rgba(37,99,235,.4);transform:translateY(-3px);box-shadow:0 16px 48px rgba(0,0,0,.4)}.card:hover::before{opacity:1}
+.gt{background:linear-gradient(135deg,var(--blue-xl),var(--cyan-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);border-radius:999px;font-size:11px;font-weight:700;color:var(--blue-xl);text-transform:uppercase;letter-spacing:.08em}
+.tag-red{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2);color:#f87171}
+.tag-green{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2);color:#4ade80}
+.tag-amber{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.2);color:#fbbf24}
+.tag-purple{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.2);color:#c084fc}
+.dot-live{width:7px;height:7px;background:#22c55e;border-radius:50%;animation:blink 2s infinite}
+.formula-box{background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;font-family:var(--mono);font-size:12px;direction:ltr}
+.fl{color:var(--blue-xl);line-height:2}.fs{color:#1e3a6e;font-size:10px;margin:4px 0}.fr{color:#fff;font-weight:700}
+.code-block{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;direction:ltr}
+.cb-header{display:flex;align-items:center;gap:7px;padding:10px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06)}
+.cb-dot{width:11px;height:11px;border-radius:50%}.cb-dot.r{background:#ef4444}.cb-dot.y{background:#f59e0b}.cb-dot.g{background:#22c55e}
+.cb-filename{color:#3d6494;font-size:11px;font-family:var(--mono);margin-left:8px}
+pre{padding:16px;margin:0;font-size:11.5px;line-height:1.7;color:#8fb4d8;font-family:var(--mono);overflow-x:auto}
+.kw{color:#818cf8}.fn{color:#60a5fa}.num{color:#fb923c}.cm{color:#374971}
+.progress-wrap{position:fixed;top:0;left:0;right:0;z-index:100;height:3px;background:rgba(37,99,235,.08)}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan-l));transition:width .4s ease;width:0}
+.slide-counter{position:fixed;bottom:24px;right:28px;z-index:100;display:flex;align-items:center;gap:10px}
+.slide-counter span{font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.2)}
+.counter-bar{width:48px;height:2px;background:rgba(255,255,255,.06);border-radius:1px;position:relative;overflow:hidden}
+.counter-fill{position:absolute;left:0;top:0;height:100%;background:rgba(255,255,255,.3);transition:width .4s}
+.nav-btn{position:fixed;top:50%;z-index:100;width:44px;height:44px;border-radius:50%;background:rgba(6,12,26,.8);border:1px solid var(--border);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);transition:all .3s;opacity:0;pointer-events:none;font-size:20px}
+.nav-btn:hover{background:rgba(37,99,235,.15);border-color:rgba(37,99,235,.4);color:#fff}
+.nav-btn.vis{opacity:1;pointer-events:all}
+.nav-prev{left:16px;transform:translateY(-50%)}.nav-next{right:16px;transform:translateY(-50%)}
+.kb-hint{position:fixed;bottom:24px;left:28px;z-index:100;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.12);font-size:11px;transition:opacity .4s}
+.kbd{display:inline-flex;align-items:center;justify-content:center;padding:2px 8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:4px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);min-width:24px}
+.spec{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#4d7bad}
+.spec-dot{width:4px;height:4px;border-radius:50%;background:var(--blue-xl);flex-shrink:0}
+.icon-box{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ib-blue{background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.25)}
+.ib-green{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.2)}
+.ib-purple{background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.2)}
+.hw-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(0,0,0,.2);border-radius:12px}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(37,99,235,.2);border:1px solid rgba(37,99,235,.3);color:var(--blue-xl);font-weight:700;font-size:11px;flex-shrink:0}
+.glow-icon{width:60px;height:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px}
+.glow-icon.blue{background:linear-gradient(135deg,var(--blue),var(--cyan));box-shadow:0 0 30px var(--glow)}
+.glow-icon.green{background:linear-gradient(135deg,#22c55e,#14b8a6);box-shadow:0 0 30px rgba(34,197,94,.3)}
+.stat-card{padding:20px 16px;text-align:center;background:rgba(6,12,26,.7);border:1px solid var(--border);border-radius:var(--radius)}
+.stat-num{font-family:var(--mono);font-size:clamp(1.4rem,2.5vw,2rem);font-weight:400;background:linear-gradient(135deg,#fff,var(--blue-xl));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.stat-unit{color:var(--cyan-l);font-size:10px;font-weight:600;margin-top:3px}
+.stat-label{color:#3d6494;font-size:11px;margin-top:4px}
+.ack-step{display:flex;align-items:center;gap:10px;padding:12px 18px;background:rgba(0,0,0,.25);border-radius:12px;border:1px solid var(--border2)}
+.ack-label{font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:7px}
+.cmp-table{width:100%;border-collapse:separate;border-spacing:0;font-size:11.5px}
+.cmp-table thead th{padding:10px 14px;background:rgba(37,99,235,.1);color:var(--blue-xl);font-weight:700;text-align:left;border-bottom:1px solid rgba(37,99,235,.2);font-size:10.5px}
+.cmp-table thead th:first-child{color:var(--white)}
+.cmp-table tbody td{padding:10px 14px;background:rgba(6,12,26,.5);color:#7aa0cc;border-bottom:1px solid rgba(37,99,235,.06)}
+.cmp-table tbody tr:last-child td{border-bottom:none}
+.cmp-table td.feat{color:var(--white);font-weight:600}
+.yes{color:#22c55e}.no{color:#ef4444}.amber{color:var(--blue-xl);font-weight:600}
+.mini-map{position:relative;width:100%;aspect-ratio:16/9;background:rgba(3,6,15,.9);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.mini-map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(37,99,235,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.06) 1px,transparent 1px);background-size:24px 24px}
+.mini-road{position:absolute;background:rgba(255,255,255,.06);border-radius:1px}
+.mini-station{position:absolute;width:12px;height:12px;border-radius:50%;background:#22c55e;border:2px solid var(--bg);box-shadow:0 0 8px rgba(34,197,94,.5);z-index:4}
+.mini-bus{position:absolute;font-size:18px;z-index:5;transition:all 2.5s cubic-bezier(.45,0,.55,1);filter:drop-shadow(0 0 6px rgba(37,99,235,.7))}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-10px);background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#4ade80;padding:10px 22px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:all .4s;z-index:999;backdrop-filter:blur(12px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
+<div class="bg-grid"></div>
+<div class="bg-aurora"><div class="au1"></div><div class="au2"></div></div>
+<div class="toast" id="toast"></div>
+<div class="progress-wrap"><div class="progress-bar" id="pbar"></div></div>
+<button class="nav-btn nav-prev" id="prevBtn" onclick="go(cur-1)">‹</button>
+<button class="nav-btn nav-next vis" id="nextBtn" onclick="go(cur+1)">›</button>
+<div class="slide-counter"><span id="sNum">01</span><div class="counter-bar"><div class="counter-fill" id="cFill"></div></div><span id="sTotal">20</span></div>
+<div class="kb-hint" id="kbHint"><span class="kbd">←</span><span class="kbd">→</span> or <span class="kbd">Space</span></div>
 
-<!-- Loading Screen -->
-<div class="loader-screen" id="loader">
-  <div class="loader-logo"><i class="fas fa-bolt"></i> SONIC<span>BOT</span></div>
-  <div class="loader-bar-track">
-    <div class="loader-bar-fill"></div>
-  </div>
-  <div class="loader-text">جاري التحميل<span class="loader-dots"></span></div>
+<div class="deck" id="deck">
+
+<!-- S1: TITLE -->
+<div class="slide active" data-s="1">
+<div style="max-width:900px;padding:0 40px;text-align:center">
+<div class="a-up"><span class="tag"><span class="dot-live"></span> IoT Project — Safari Institute</span></div>
+<h1 class="a-up d1" style="font-size:clamp(2.8rem,8vw,6.5rem);font-weight:700;line-height:.92;letter-spacing:-2px;margin:28px 0 8px;background:linear-gradient(135deg,#fff 0%,#93c5fd 40%,var(--cyan-l) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Smart Bus<br>Tracking System</h1>
+<p class="a-up d2" style="font-size:clamp(1rem,2.2vw,1.2rem);color:var(--muted);line-height:1.6">Using <strong style="color:var(--blue-xl)">LoRa</strong> and <strong style="color:var(--cyan-l)">GPS</strong> Technologies</p>
+<p class="a-up d3" style="font-size:13px;color:#3d6494;max-width:500px;margin:8px auto 28px;line-height:1.65">An integrated bus tracking system providing accurate, real-time information about bus location, speed, and ETA — without cellular networks.</p>
+<div class="a-up d4" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-bottom:24px">
+<div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.25);border-radius:999px;font-size:14px;font-weight:600">👥 Team SAFARIMAKERS</div>
+<div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:999px;font-size:13px;color:var(--muted)">🎓 Supervised by <strong style="color:var(--white)">Mohamed Abdelake</strong></div>
+</div>
+<div class="a-fade d5" style="display:flex;justify-content:center;gap:12px;margin-bottom:10px">
+<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid rgba(255,255,255,.12)">OA</div>
+<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid rgba(255,255,255,.12)">RG</div>
+<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#10b981,#14b8a6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid rgba(255,255,255,.12)">IF</div>
+</div>
+<div class="a-fade d6" style="font-size:12px;color:rgba(255,255,255,.22)">Oussama El Assiri · Rayan El Ghazali · Imran El Fachtioui</div>
+<div class="a-fade d10" style="margin-top:40px;font-size:11px;color:rgba(255,255,255,.1)">Press → or Space to navigate</div>
+</div>
 </div>
 
-<!-- Custom Cursor -->
-<div class="cursor-dot" id="cursorDot"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-
-<!-- Background -->
-<canvas id="bgCanvas"></canvas>
-<div class="glow-orb g1"></div>
-<div class="glow-orb g2"></div>
-<div class="glow-orb g3"></div>
-
-<!-- Navbar -->
-<nav id="navbar">
-  <div class="nav-logo">
-    <div class="logo-icon"><i class="fas fa-bolt"></i></div>
-    SONIC<span>BOT</span>
-  </div>
-  <div class="nav-links">
-    <a href="#home" class="active">الرئيسية</a>
-    <a href="#about">عني</a>
-    <a href="#features">المميزات</a>
-    <a href="#skills">المهارات</a>
-    <a href="#projects">البوتات</a>
-    <a href="#services">الخدمات</a>
-    <a href="#contact" class="nav-cta">تواصل معي</a>
-  </div>
-  <button class="menu-toggle" id="menuToggle" aria-label="القائمة">
-    <span></span><span></span><span></span>
-  </button>
-</nav>
-
-<!-- Mobile Menu -->
-<div class="mobile-menu" id="mobileMenu">
-  <a href="#home">الرئيسية</a>
-  <a href="#about">عني</a>
-  <a href="#features">المميزات</a>
-  <a href="#skills">المهارات</a>
-  <a href="#projects">البوتات</a>
-  <a href="#services">الخدمات</a>
-  <a href="#contact">تواصل معي</a>
+<!-- S2: PROBLEM -->
+<div class="slide" data-s="2">
+<div style="max-width:940px;padding:0 40px;width:100%">
+<div style="text-align:center;margin-bottom:36px">
+<span class="a-up tag tag-red">⚠ The Problem</span>
+<h2 class="a-up d1" style="font-size:clamp(2rem,5.5vw,4rem);font-weight:700;line-height:1.05;margin-top:16px">Have you ever experienced<br>this feeling<span style="color:#f87171">…</span></h2>
+<p class="a-up d2" style="font-size:16px;color:var(--muted);margin-top:10px">Waiting for the bus with <strong style="color:#f87171">no information</strong> at all?</p>
+</div>
+<div class="a-up d3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+<div class="card" style="padding:28px;text-align:center"><div style="width:64px;height:64px;border-radius:18px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;animation:glow-pulse 3s ease-in-out infinite">🕐</div><p style="font-weight:700;font-size:16px;margin-bottom:8px">When Will It Arrive?</p><p style="font-size:12px;color:#3d6494;line-height:1.6">No estimated time of arrival. Passengers left completely in the dark.</p></div>
+<div class="card" style="padding:28px;text-align:center"><div style="width:64px;height:64px;border-radius:18px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;animation:glow-pulse 3s ease-in-out infinite .5s">❓</div><p style="font-weight:700;font-size:16px;margin-bottom:8px">Did It Already Pass?</p><p style="font-size:12px;color:#3d6494;line-height:1.6">No way to know if you missed it or if it hasn't left yet.</p></div>
+<div class="card" style="padding:28px;text-align:center"><div style="width:64px;height:64px;border-radius:18px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;animation:glow-pulse 3s ease-in-out infinite 1s">📵</div><p style="font-weight:700;font-size:16px;margin-bottom:8px">No Network Coverage</p><p style="font-size:12px;color:#3d6494;line-height:1.6">4G is costly, limited in rural areas, requires monthly subscriptions.</p></div>
+</div>
+<div class="a-fade d6" style="text-align:center;margin-top:20px;padding:10px 22px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.12);border-radius:12px;display:inline-block"><p style="font-size:12px;color:#f87171">This daily frustration affects millions of commuters — especially in developing regions</p></div>
+</div>
 </div>
 
-<div class="page">
-
-<!-- ════════ HERO ════════ -->
-<section class="hero" id="home">
-  <div class="hero-inner">
-    <div class="avatar-wrap">
-      <div class="avatar-ring-outer"></div>
-      <div class="avatar-ring-inner"></div>
-      <img class="avatar-img" src="main.jpg" alt="SONIC">
-      <div class="avatar-status"></div>
-      <div class="avatar-badge">MD</div>
-    </div>
-
-    <div class="hero-badge">
-      <span class="dot"></span>
-      متاح للعمل الآن
-    </div>
-
-    <h1>SONIC <span class="blue">BOT</span> <span class="md">MD</span></h1>
-
-    <p class="hero-subtitle">
-      <span class="typed-text" id="typedText"></span><span class="cursor-blink"></span>
-    </p>
-
-    <div class="cta-row">
-      <a class="btn-primary" href="https://wa.me/212698078610">
-        <i class="fab fa-whatsapp"></i> تواصل عبر واتساب
-      </a>
-      <a class="btn-ghost" href="https://t.me/b9_db">
-        <i class="fab fa-telegram"></i> تيليجرام
-      </a>
-    </div>
-
-    <div class="social-row">
-      <a class="social-icon" href="https://wa.me/212698078610" aria-label="واتساب"><i class="fab fa-whatsapp"></i></a>
-      <a class="social-icon" href="https://t.me/b9_db" aria-label="تيليجرام"><i class="fab fa-telegram"></i></a>
-      <a class="social-icon" href="https://whatsapp.com/channel/0029VbC9jBa7oQhlrjUPKa33" aria-label="القناة"><i class="fas fa-bullhorn"></i></a>
-      <a class="social-icon" href="https://github.com" aria-label="جيتهب"><i class="fab fa-github"></i></a>
-    </div>
-  </div>
-
-  <div class="scroll-hint">
-    <div class="scroll-mouse"></div>
-    <span>اسحب للأسفل</span>
-  </div>
-</section>
-
-<!-- ════════ ABOUT ════════ -->
-<section id="about">
-  <div class="about-grid">
-    <div class="about-image reveal">
-      <img src="main.jpg" alt="SONIC BOT">
-      <div class="float-card">
-        <div class="fc-icon"><i class="fas fa-bolt"></i></div>
-        <div>
-          <div class="fc-text">SONIC MD</div>
-          <div class="fc-sub">Open Source Developer</div>
-        </div>
-      </div>
-    </div>
-    <div class="about-content reveal reveal-delay-2">
-      <div class="section-tag">من أنا</div>
-      <h2 class="section-title">مطور بوتات واتساب <span style="color:var(--primary)">مفتوحة المصدر</span></h2>
-      <h3><i class="fas fa-terminal" style="margin-left:8px"></i> SONIC — Bot Developer</h3>
-      <p>
-        أنا SONIC، مطور متخصص في إنشاء بوتات واتساب بتقنية Multi-Device ومفتوحة المصدر.
-        أعمل على تطوير بوتات ذكية ومتكاملة بأنظمة إدارة متقدمة،
-        ألعاب تفاعلية، وأنظمة حماية قوية. جميع بوتاتي متاحة كمصدر مفتوح للجميع.
-      </p>
-      <p>
-        أصمم بوتات بثيمات مميزة مستوحاة من أنمي ناروتو وكاكاشي مع واجهة عربية كاملة
-        وأوامر سهلة الاستخدام. كل بوت فريد ومخصص بأحدث التقنيات.
-      </p>
-      <div class="about-highlights">
-        <div class="highlight-item"><i class="fas fa-check"></i><span>بوتات MD مفتوحة المصدر</span></div>
-        <div class="highlight-item"><i class="fas fa-check"></i><span>أوامر عربية بالكامل</span></div>
-        <div class="highlight-item"><i class="fas fa-check"></i><span>ثيمات ناروتو وكاكاشي</span></div>
-        <div class="highlight-item"><i class="fas fa-check"></i><span>نظام حماية متقدم</span></div>
-        <div class="highlight-item"><i class="fas fa-check"></i><span>استضافة VPS 24/7</span></div>
-        <div class="highlight-item"><i class="fas fa-check"></i><span>دعم فني مستمر</span></div>
-      </div>
-      <a class="btn-primary" href="#projects" style="display:inline-flex">
-        <i class="fab fa-github"></i> استكشف البوتات
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- ════════ STATS ════════ -->
-<div class="stats-section">
-  <div class="stats-inner">
-    <div style="text-align:center;margin-bottom:50px" class="reveal">
-      <div class="section-tag">الإحصائيات</div>
-      <h2 class="section-title">أرقام تتحدث <span style="color:var(--primary)">عني</span></h2>
-    </div>
-    <div class="stats-grid">
-      <div class="stat-card reveal">
-        <div class="stat-icon"><i class="fas fa-robot"></i></div>
-        <div class="stat-num" data-target="3" data-suffix="">0</div>
-        <div class="stat-label">بوتات مفتوحة المصدر</div>
-      </div>
-      <div class="stat-card reveal reveal-delay-1">
-        <div class="stat-icon"><i class="fas fa-users"></i></div>
-        <div class="stat-num" data-target="800" data-suffix="+">0</div>
-        <div class="stat-label">مستخدم نشط</div>
-      </div>
-      <div class="stat-card reveal reveal-delay-2">
-        <div class="stat-icon"><i class="fab fa-github"></i></div>
-        <div class="stat-num" data-target="150" data-suffix="+">0</div>
-        <div class="stat-label">نجمة على جيتهب</div>
-      </div>
-      <div class="stat-card reveal reveal-delay-3">
-        <div class="stat-icon"><i class="fas fa-headset"></i></div>
-        <div class="stat-num" data-target="24" data-suffix="/7">0</div>
-        <div class="stat-label">دعم فني متواصل</div>
-      </div>
-    </div>
-  </div>
+<!-- S3: MOTIVATION -->
+<div class="slide" data-s="3">
+<div style="max-width:880px;padding:0 40px;text-align:center">
+<div class="a-scale"><div class="glow-icon blue" style="margin:0 auto 28px;animation:float 6s ease-in-out infinite">💡</div></div>
+<h2 class="a-up d2" style="font-size:clamp(2.2rem,6vw,4.5rem);font-weight:700;line-height:1;margin-bottom:12px">This sparked our <span class="gt">motivation</span></h2>
+<p class="a-up d3" style="font-size:14px;color:var(--muted);max-width:560px;margin:0 auto 32px;line-height:1.75">We decided to build a solution that doesn't depend on expensive cellular networks — something that works everywhere, is affordable, and provides real-time data.</p>
+<div class="a-scale d5" style="display:inline-block"><div style="padding:22px 60px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.25);border-radius:24px;backdrop-filter:blur(8px)"><p style="font-size:clamp(2.2rem,5vw,3.8rem);font-weight:700;letter-spacing:-1px;background:linear-gradient(135deg,#fff,#93c5fd,var(--cyan-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent">LoRa Track</p><p style="font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.15em">Integrated Bus Tracking System</p></div></div>
+<div class="a-up d7" style="margin-top:24px;display:flex;flex-wrap:wrap;justify-content:center;gap:14px">
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:7px;height:7px;border-radius:50%;background:#22c55e"></span>Real-time tracking</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:7px;height:7px;border-radius:50%;background:var(--blue-xl)"></span>No internet needed</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:7px;height:7px;border-radius:50%;background:var(--cyan-l)"></span>Cost-effective</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:7px;height:7px;border-radius:50%;background:#fbbf24"></span>TFT + Web display</div>
+</div>
+</div>
 </div>
 
-<!-- ════════ BOT FEATURES ════════ -->
-<section id="features">
-  <div class="reveal">
-    <div class="section-tag">مميزات البوت</div>
-    <h2 class="section-title">بوتات واتساب MD <span style="color:var(--primary)">بالمواصفات دي</span></h2>
-    <p class="section-desc">
-      بوتاتي مفتوحة المصدر مبنية بأحدث تقنيات WhatsApp Multi-Device مع أوامر عربية بالكامل وثيمات أنمي مميزة
-    </p>
-  </div>
-  <div class="bot-features-grid">
-    <div class="bot-feature reveal">
-      <div class="bf-header">
-        <div class="bf-icon"><i class="fas fa-shield-alt"></i></div>
-        <h3>حماية المجموعة</h3>
-      </div>
-      <p>نظام حماية متعدد الطبقات يشمل منع الروابط، السبام، التكرار، والأرقام الوهمية مع تحكم كامل بالإعدادات</p>
-    </div>
-    <div class="bot-feature reveal reveal-delay-1">
-      <div class="bf-header">
-        <div class="bf-icon"><i class="fas fa-crown"></i></div>
-        <h3>نظام رتب وصلاحيات</h3>
-      </div>
-      <p>نظام رتب متدرج مع صلاحيات مخصصة: مالك، مشرف، عضو مميز، مع إمكانية إنشاء رتب مخصصة لكل مجموعة</p>
-    </div>
-    <div class="bot-feature reveal reveal-delay-2">
-      <div class="bf-header">
-        <div class="bf-icon"><i class="fas fa-gamepad"></i></div>
-        <h3>ألعاب تفاعلية</h3>
-      </div>
-      <p>مجموعة ألعاب متنوعة: خمن الشخصية، تحديات ناروتو، بطاقات، ترتيب، وألعاب جماعية في المجموعة</p>
-    </div>
-    <div class="bot-feature reveal reveal-delay-3">
-      <div class="bf-header">
-        <div class="bf-icon"><i class="fas fa-download"></i></div>
-        <h3>تحميل من المنصات</h3>
-      </div>
-      <p>تحميل الفيديوهات والصوت من يوتيوب، تيكتوك، إنستغرام، تويتر وغيرها مباشرة عبر البوت بالعربي</p>
-    </div>
-    <div class="bot-feature reveal reveal-delay-4">
-      <div class="bf-header">
-        <div class="bf-icon"><i class="fas fa-magic"></i></div>
-        <h3>الذكاء الاصطناعي</h3>
-      </div>
-      <p>تحويل الصوت لنص، توليد صور بالذكاء الاصطناعي، محادثة ذكية مع ChatGPT مدمج في البوت</p>
-    </div>
-    <div class="bot-feature reveal reveal-delay-5">
-      <div class="bf-header">
-        <div class="bf-icon"><i class="fas fa-language"></i></div>
-        <h3>واجهة عربية كاملة</h3>
-      </div>
-      <p>جميع الأوامر والرسائل باللغة العربية، واجهة سهلة للمستخدم العربي بدون تعقيدات</p>
-    </div>
-    <div class="bot-feature reveal">
-      <div class="bf-header">
-        <div class="bf-icon"><i class="fas fa-palette"></i></div>
-        <h3>ثيمات أنمي مميزة</h3>
-      </div>
-      <p>ثيمات مستوحاة من ناروتو، كاكاشي، وسونيك مع إمكانية تغيير الثيم حسب الرغبة</p>
-    </div>
-    <div class="bot-feature reveal reveal-delay-1">
-      <div class="bf-header">
-        <div class="bf-icon"><i class="fas fa-code-branch"></i></div>
-        <h3>مفتوح المصدر</h3>
-      </div>
-      <p>الكود المصدري متاح على جيتهب للجميع، تقدر تعدل وتطور البوت حسب احتياجاتك</p>
-    </div>
-    <div class="bot-feature reveal reveal-delay-2">
-      <div class="bf-header">
-        <div class="bf-icon"><i class="fas fa-tools"></i></div>
-        <h3>أدوات المالك</h3>
-      </div>
-      <p>لوحة تحكم كاملة: تغيير الإعدادات، إدارة المشرفين، عرض الإحصائيات، النسخ الاحتياطي واستعادته</p>
-    </div>
-  </div>
-</section>
-
-<!-- ════════ COMMANDS PREVIEW ════════ -->
-<section id="commands">
-  <div class="reveal">
-    <div class="section-tag">الأوامر</div>
-    <h2 class="section-title">نظرة على <span style="color:var(--primary)">أوامر البوت</span></h2>
-    <p class="section-desc">جميع الأوامر بالعربي — سهلة وبسيطة</p>
-  </div>
-  <div class="commands-preview reveal">
-    <div class="commands-header">
-      <div class="commands-dots">
-        <span></span><span></span><span></span>
-      </div>
-      <div class="commands-title-bar">SONIC-BOT-MD — الأوامر العربية</div>
-      <div style="width:42px"></div>
-    </div>
-    <div class="commands-body" id="commandsBody">
-      <div class="cmd-line"><span class="cmd-prefix">></span><span class="cmd-comment">// أوامر المشرف الأساسية</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">طرد <span class="cmd-highlight">@user</span> — طرد عضو من المجموعة</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">كتم <span class="cmd-highlight">@user</span> — كتم عضو</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">ترقية <span class="cmd-highlight">@user</span> — ترقية لمشرف</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">تنزيل <span class="cmd-highlight">@user</span> — إزالة مشرف</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">رابط — رابط المجموعة</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">تغيير_الصورة <span class="cmd-highlight">[صورة]</span> — تغيير صورة المجموعة</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">تغيير_الاسم <span class="cmd-highlight">[نص]</span> — تغيير اسم المجموعة</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">تغيير_الوصف <span class="cmd-highlight">[نص]</span> — تغيير وصف المجموعة</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">&nbsp;</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">></span><span class="cmd-comment">// أوامر المالك الحصرية</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">إضافة_مالك <span class="cmd-highlight">@user</span> — إضافة مالك جديد</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">حذف_مالك <span class="cmd-highlight">@user</span> — حذف مالك</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">نسخ_احتياطي — أخذ نسخة احتياطية</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">إحصائيات — عرض إحصائيات البوت</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">&nbsp;</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">></span><span class="cmd-comment">// أوامر التحميل</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">صوت <span class="cmd-highlight">[اسم]</span> — تحميل صوت من يوتيوب</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">فيديو <span class="cmd-highlight">[اسم]</span> — تحميل فيديو من يوتيوب</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">تيكتوك <span class="cmd-highlight">[رابط]</span> — تحميل من تيكتوك</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">انستغرام <span class="cmd-highlight">[رابط]</span> — تحميل من انستغرام</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">&nbsp;</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">></span><span class="cmd-comment">// أوامر الذكاء الاصطناعي</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">سؤال <span class="cmd-highlight">[سؤالك]</span> — محادثة ذكية</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">رسم <span class="cmd-highlight">[وصف]</span> — توليد صور بالذكاء الاصطناعي</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">ترجمة <span class="cmd-highlight">[نص]</span> — ترجمة النص</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">&nbsp;</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">></span><span class="cmd-comment">// أوامر الألعاب والترفيه</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">خمن — لعبة تخمين الشخصية</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">بطاقة — بطاقة أنمي عشوائية</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">تحدي — تحدي ناروتو</span></div>
-      <div class="cmd-line"><span class="cmd-prefix">.</span><span class="cmd-text">ثيم <span class="cmd-highlight">[اسم]</span> — تغيير ثيم البوت</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════ SKILLS ════════ -->
-<section id="skills">
-  <div class="reveal">
-    <div class="section-tag">المهارات</div>
-    <h2 class="section-title">التقنيات اللي <span style="color:var(--primary)">أتقنها</span></h2>
-    <p class="section-desc">مجموعة التقنيات والأدوات اللي أستخدمها يوميًا في تطوير البوتات</p>
-  </div>
-  <div class="skills-grid">
-    <div class="skill-card reveal">
-      <div class="skill-header">
-        <div class="skill-name">
-          <div class="skill-icon-box"><i class="fab fa-js-square"></i></div>
-          JavaScript
-        </div>
-        <span class="skill-pct">90%</span>
-      </div>
-      <div class="skill-track">
-        <div class="skill-fill" data-width="90"></div>
-      </div>
-    </div>
-    <div class="skill-card reveal reveal-delay-1">
-      <div class="skill-header">
-        <div class="skill-name">
-          <div class="skill-icon-box"><i class="fab fa-node-js"></i></div>
-          Node.js
-        </div>
-        <span class="skill-pct">88%</span>
-      </div>
-      <div class="skill-track">
-        <div class="skill-fill" data-width="88"></div>
-      </div>
-    </div>
-    <div class="skill-card reveal reveal-delay-2">
-      <div class="skill-header">
-        <div class="skill-name">
-          <div class="skill-icon-box"><i class="fab fa-python"></i></div>
-          Python
-        </div>
-        <span class="skill-pct">75%</span>
-      </div>
-      <div class="skill-track">
-        <div class="skill-fill" data-width="75"></div>
-      </div>
-    </div>
-    <div class="skill-card reveal reveal-delay-3">
-      <div class="skill-header">
-        <div class="skill-name">
-          <div class="skill-icon-box"><i class="fab fa-html5"></i></div>
-          HTML / CSS
-        </div>
-        <span class="skill-pct">95%</span>
-      </div>
-      <div class="skill-track">
-        <div class="skill-fill" data-width="95"></div>
-      </div>
-    </div>
-    <div class="skill-card reveal reveal-delay-4">
-      <div class="skill-header">
-        <div class="skill-name">
-          <div class="skill-icon-box"><i class="fas fa-database"></i></div>
-          MongoDB
-        </div>
-        <span class="skill-pct">85%</span>
-      </div>
-      <div class="skill-track">
-        <div class="skill-fill" data-width="85"></div>
-      </div>
-    </div>
-    <div class="skill-card reveal reveal-delay-5">
-      <div class="skill-header">
-        <div class="skill-name">
-          <div class="skill-icon-box"><i class="fab fa-git-alt"></i></div>
-          Git & GitHub
-        </div>
-        <span class="skill-pct">82%</span>
-      </div>
-      <div class="skill-track">
-        <div class="skill-fill" data-width="82"></div>
-      </div>
-    </div>
-    <div class="skill-card reveal">
-      <div class="skill-header">
-        <div class="skill-name">
-          <div class="skill-icon-box"><i class="fab fa-aws"></i></div>
-          Linux / VPS
-        </div>
-        <span class="skill-pct">78%</span>
-      </div>
-      <div class="skill-track">
-        <div class="skill-fill" data-width="78"></div>
-      </div>
-    </div>
-    <div class="skill-card reveal reveal-delay-1">
-      <div class="skill-header">
-        <div class="skill-name">
-          <div class="skill-icon-box"><i class="fas fa-brain"></i></div>
-          REST APIs
-        </div>
-        <span class="skill-pct">87%</span>
-      </div>
-      <div class="skill-track">
-        <div class="skill-fill" data-width="87"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════ PROJECTS ════════ -->
-<section id="projects">
-  <div class="reveal">
-    <div class="section-tag">البوتات</div>
-    <h2 class="section-title">بوتاتي <span style="color:var(--primary)">مفتوحة المصدر</span></h2>
-    <p class="section-desc">ثلاثة بوتات MD بالعربي مع ثيمات أنمي مميزة</p>
-  </div>
-  <div class="projects-grid">
-    <div class="project-card reveal">
-      <div class="project-thumb"><i class="fas fa-bolt"></i></div>
-      <div class="project-info">
-        <h3>SONIC BOT MD</h3>
-        <p>البوت الرئيسي بتقنية Multi-Device بأكثر من 200 أمر بالعربي، ثيم سونيك مميز، حماية متقدمة، ألعاب، وتحميلات</p>
-        <div class="project-tags">
-          <span class="project-tag">Node.js</span>
-          <span class="project-tag">Baileys</span>
-          <span class="project-tag">MongoDB</span>
-        </div>
-        <div class="project-opensource"><i class="fas fa-lock-open"></i> مفتوح المصدر</div>
-      </div>
-    </div>
-    <div class="project-card reveal reveal-delay-1">
-      <div class="project-thumb"><i class="fas fa-eye"></i></div>
-      <div class="project-info">
-        <h3>KAKASHI BOT MD</h3>
-        <p>بوت بثيم كاكاشي هاتاكي مع أوامر عربية كاملة، نظام حماية ذكي، ألعاب ناروتو، وأدوات تحميل متقدمة</p>
-        <div class="project-tags">
-          <span class="project-tag">JavaScript</span>
-          <span class="project-tag">Anti-Spam</span>
-          <span class="project-tag">Anime</span>
-        </div>
-        <div class="project-opensource"><i class="fas fa-lock-open"></i> مفتوح المصدر</div>
-      </div>
-    </div>
-    <div class="project-card reveal reveal-delay-2">
-      <div class="project-thumb"><i class="fas fa-torii-gate"></i></div>
-      <div class="project-info">
-        <h3>NARUTO BOT MD</h3>
-        <p>بوت بثيم ناروتو أوتشيها مع ألعاب شينوبي، نظام رتب قرى النينجا، وأوامر ترفيهية مستوحاة من الأنمي</p>
-        <div class="project-tags">
-          <span class="project-tag">Naruto</span>
-          <span class="project-tag">Games</span>
-          <span class="project-tag">API</span>
-        </div>
-        <div class="project-opensource"><i class="fas fa-lock-open"></i> مفتوح المصدر</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════ OPEN SOURCE BANNER ════════ -->
-<div class="opensource-banner">
-  <div class="opensource-inner reveal">
-    <div class="os-icon"><i class="fab fa-github"></i></div>
-    <h2 class="os-title">الكل <span style="color:var(--primary)">مفتوح المصدر</span></h2>
-    <p class="os-desc">
-      جميع بوتاتي متاحة كمصدر مفتوح على جيتهب. تقدر تستخدمها، تعدلها، وتطورها حسب احتياجاتك. الكود نظيف ومنظم ومشروح بالتفصيل.
-    </p>
-    <div class="os-repos">
-      <a class="os-repo" href="https://github.com" target="_blank">
-        <i class="fab fa-github"></i> SONIC BOT MD
-      </a>
-      <a class="os-repo" href="https://github.com" target="_blank">
-        <i class="fab fa-github"></i> KAKASHI BOT MD
-      </a>
-      <a class="os-repo" href="https://github.com" target="_blank">
-        <i class="fab fa-github"></i> NARUTO BOT MD
-      </a>
-    </div>
-  </div>
+<!-- S4: SYSTEM OVERVIEW -->
+<div class="slide" data-s="4">
+<div style="max-width:1060px;padding:0 40px;width:100%">
+<div style="text-align:center;margin-bottom:32px">
+<span class="a-up tag">📋 System Architecture</span>
+<h2 class="a-up d1" style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.1;margin-top:12px">Two Devices, <span class="gt">One System</span></h2>
+<p class="a-up d2" style="font-size:13px;color:var(--muted);margin-top:4px">A mobile device on the bus and a stationary device at the station</p>
+</div>
+<div class="a-up d3" style="display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap">
+<div class="card" style="padding:26px;width:250px">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px"><div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px var(--glow)">🚌</div><div><p style="font-weight:700;font-size:16px">Bus Node</p><p style="font-size:10px;color:#3d6494">Mobile Device</p></div></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="hw-item"><div class="icon-box ib-blue" style="width:34px;height:34px;font-size:15px">💻</div><div><p style="font-weight:700;font-size:12px">ESP32</p><p style="font-size:10px;color:#3d6494">Main microcontroller</p></div></div>
+<div class="hw-item"><div class="icon-box ib-blue" style="width:34px;height:34px;font-size:15px">📻</div><div><p style="font-weight:700;font-size:12px">LoRa RA-01</p><p style="font-size:10px;color:#3d6494">SX1278 radio</p></div></div>
+<div class="hw-item"><div class="icon-box ib-blue" style="width:34px;height:34px;font-size:15px">🛰️</div><div><p style="font-weight:700;font-size:12px">GPS Module</p><p style="font-size:10px;color:#3d6494">Satellite positioning</p></div></div>
+<div class="hw-item"><div class="icon-box ib-blue" style="width:34px;height:34px;font-size:15px">⏻</div><div><p style="font-weight:700;font-size:12px">ON/OFF Switch</p><p style="font-size:10px;color:#3d6494">Power control</p></div></div>
+</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0">
+<div style="width:100px;height:2px;background:linear-gradient(90deg,var(--blue),var(--cyan-l));position:relative"><div style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:8px;height:8px;background:var(--blue-xl);border-radius:50%;animation:busMove 2s ease-in-out infinite;box-shadow:0 0 8px var(--blue-xl)"></div></div>
+<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--blue-xl)">LoRa TX</span>
+<div style="font-size:12px;color:rgba(255,255,255,.08)">↓</div>
+<div style="width:100px;height:2px;background:linear-gradient(90deg,#22c55e,var(--cyan-l));position:relative"><div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:6px;height:6px;background:#22c55e;border-radius:50%;animation:signalSend 1.5s infinite"></div></div>
+<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#4ade80">ACK RX</span>
+</div>
+<div class="card" style="padding:26px;width:250px">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px"><div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#14b8a6);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px rgba(34,197,94,.3)">🏢</div><div><p style="font-weight:700;font-size:16px">Bus Station</p><p style="font-size:10px;color:#3d6494">Stationary Device</p></div></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="hw-item"><div class="icon-box ib-green" style="width:34px;height:34px;font-size:15px">🖥️</div><div><p style="font-weight:700;font-size:12px">LCD CYD ESP32</p><p style="font-size:10px;color:#3d6494">Color TFT + MCU</p></div></div>
+<div class="hw-item"><div class="icon-box ib-green" style="width:34px;height:34px;font-size:15px">📻</div><div><p style="font-weight:700;font-size:12px">LoRa Module</p><p style="font-size:10px;color:#3d6494">Receives data</p></div></div>
+<div class="hw-item"><div class="icon-box ib-green" style="width:34px;height:34px;font-size:15px">🔋</div><div><p style="font-weight:700;font-size:12px">Lithium Battery</p><p style="font-size:10px;color:#3d6494">Portable power</p></div></div>
+<div class="hw-item"><div class="icon-box ib-green" style="width:34px;height:34px;font-size:15px">⏻</div><div><p style="font-weight:700;font-size:12px">ON/OFF Switch</p><p style="font-size:10px;color:#3d6494">Power management</p></div></div>
+</div></div>
+</div>
+<div class="a-up d6" style="text-align:center;margin-top:18px"><div style="display:inline-flex;align-items:center;gap:8px;padding:8px 20px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:999px;font-size:12px;color:var(--muted)">🌐 Data displayed on <strong style="color:var(--white)">TFT screen</strong> AND <strong style="color:var(--white)">web page</strong></div></div>
+</div>
 </div>
 
-<!-- ════════ TESTIMONIALS ════════ -->
-<section id="testimonials">
-  <div class="reveal">
-    <div class="section-tag">آراء المستخدمين</div>
-    <h2 class="section-title">الناس بتقول إيه <span style="color:var(--primary)">عن البوتات</span></h2>
-    <p class="section-desc">آراء حقيقية من مستخدمين البوتات المفتوحة المصدر</p>
-  </div>
-  <div class="testimonials-track">
-    <div class="testimonial-card reveal">
-      <div class="testi-stars">
-        <i class="fas fa-star"></i><i class="fas fa-star"></i>
-        <i class="fas fa-star"></i><i class="fas fa-star"></i>
-        <i class="fas fa-star"></i>
-      </div>
-      <p class="testi-text">"بوت سونيك شغال تمام 24/7 والأوامر كلها بالعربي سهلة جداً. الثيم حلو والبوت مفتوح المصدر فعلاً الكود نظيف."</p>
-      <div class="testi-author">
-        <div class="testi-avatar">أ</div>
-        <div>
-          <div class="testi-name">أحمد يوسف</div>
-          <div class="testi-role">مستخدم بوت سونيك — مجموعة 12K</div>
-        </div>
-      </div>
-    </div>
-    <div class="testimonial-card reveal reveal-delay-1">
-      <div class="testi-stars">
-        <i class="fas fa-star"></i><i class="fas fa-star"></i>
-        <i class="fas fa-star"></i><i class="fas fa-star"></i>
-        <i class="fas fa-star"></i>
-      </div>
-      <p class="testi-text">"بوت كاكاشي من أحسن البوتات اللي جربتها. ثيم كاكاشي رهيب والألعاب مستوحاة من ناروتو. شكرًا sonic على المصدر المفتوح."</p>
-      <div class="testi-author">
-        <div class="testi-avatar">م</div>
-        <div>
-          <div class="testi-name">محمد علي</div>
-          <div class="testi-role">مستخدم بوت كاكاشي</div>
-        </div>
-      </div>
-    </div>
-    <div class="testimonial-card reveal reveal-delay-2">
-      <div class="testi-stars">
-        <i class="fas fa-star"></i><i class="fas fa-star"></i>
-        <i class="fas fa-star"></i><i class="fas fa-star"></i>
-        <i class="fas fa-star-half-alt"></i>
-      </div>
-      <p class="testi-text">"بوت ناروتو مذهل! ألعاب الشينوبي ممتعة والأوامر عربية بالكامل. الكود المصدري ساعدني أتعلم برمجة البوتات."</p>
-      <div class="testi-author">
-        <div class="testi-avatar">خ</div>
-        <div>
-          <div class="testi-name">خالد إبراهيم</div>
-          <div class="testi-role">مستخدم بوت ناروتو — مطور مبتدئ</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════ SERVICES ════════ -->
-<section id="services">
-  <div class="reveal">
-    <div class="section-tag">الخدمات</div>
-    <h2 class="section-title">خدمات <span style="color:var(--primary)">إضافية</span></h2>
-    <p class="section-desc">بجانب البوتات المفتوحة المصدر، أقدم خدمات مخصصة</p>
-  </div>
-  <div class="services-grid">
-    <div class="service-card reveal">
-      <div class="svc-icon"><i class="fas fa-wrench"></i></div>
-      <div class="svc-content">
-        <h3>تعديل بوت مخصص</h3>
-        <p>تعديل أي بوت من بوتاتي المفتوحة المصدر وإضافة مميزات جديدة حسب احتياجاتك الخاصة</p>
-      </div>
-    </div>
-    <div class="service-card reveal reveal-delay-1">
-      <div class="svc-icon"><i class="fas fa-rocket"></i></div>
-      <div class="svc-content">
-        <h3>بوت جديد من الصفر</h3>
-        <p>تصميم وبرمجة بوت واتساب MD جديد بالكامل بثيم وأوامر مخصصة حسب طلبك</p>
-      </div>
-    </div>
-    <div class="service-card reveal reveal-delay-2">
-      <div class="svc-icon"><i class="fas fa-server"></i></div>
-      <div class="svc-content">
-        <h3>استضافة وإعداد</h3>
-        <p>رفع البوت على سيرفر VPS مع إعداد كامل، مراقبة 24/7، وإعادة تشغيل تلقائية</p>
-      </div>
-    </div>
-    <div class="service-card reveal reveal-delay-3">
-      <div class="svc-icon"><i class="fas fa-graduation-cap"></i></div>
-      <div class="svc-content">
-        <h3>دعم تعليمي</h3>
-        <p>مساعدتك في فهم الكود المصدري وتعلم برمجة بوتات واتساب MD خطوة بخطوة</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════ FAQ ════════ -->
-<section id="faq">
-  <div class="reveal">
-    <div class="section-tag">أسئلة شائعة</div>
-    <h2 class="section-title">أسئلة بتتكرر <span style="color:var(--primary)">كثير</span></h2>
-    <p class="section-desc">إجابات على أكثر الأسئلة اللي بتسألوها</p>
-  </div>
-  <div class="faq-list">
-    <div class="faq-item reveal">
-      <button class="faq-question">
-        إيه معنى مفتوح المصدر؟
-        <i class="fas fa-chevron-down"></i>
-      </button>
-      <div class="faq-answer">
-        <div class="faq-answer-inner">
-          معنى إن الكود المصدري للبوت متاح للجميع على جيتهب. تقدر تحمل الكود، تقرأه، تعدله، وتستخدمه بدون أي رسوم. بس يرجى ذكر المصدر الأصلي.
-        </div>
-      </div>
-    </div>
-    <div class="faq-item reveal reveal-delay-1">
-      <button class="faq-question">
-        هل البوتات بيشتغلوا 24/7؟
-        <i class="fas fa-chevron-down"></i>
-      </button>
-      <div class="faq-answer">
-        <div class="faq-answer-inner">
-          أيوا، بعد ما تنزل الكود وتشغله على سيرفر VPS، البوت بيشتغل 24 ساعة يوميًا بدون توقف. بنقدم أيضاً خدمة استضافة لو حابب.
-        </div>
-      </div>
-    </div>
-    <div class="faq-item reveal reveal-delay-2">
-      <button class="faq-question">
-        إيه الفرق بين البوتات التلاتة؟
-        <i class="fas fa-chevron-down"></i>
-      </button>
-      <div class="faq-answer">
-        <div class="faq-answer-inner">
-          سونيك هو البوت الرئيسي بشامل كل المميزات. كاكاشي بثيم كاكاشي مع تركيز على حماية وألعاب ناروتو. ناروتو بثيم قرى النينجا مع ألعاب شينوبي حصرية. كلهم نفس الأوامر الأساسية بالعربي.
-        </div>
-      </div>
-    </div>
-    <div class="faq-item reveal reveal-delay-3">
-      <button class="faq-question">
-        هل ممكن أضيف مميزات جديدة؟
-        <i class="fas fa-chevron-down"></i>
-      </button>
-      <div class="faq-answer">
-        <div class="faq-answer-inner">
-          طبعًا! بما إن الكود مفتوح المصدر، تقدر تعدل عليه بنفسك. أو لو حابب ممكن أعمل لك تعديلات مخصصة مقابل رسوم بسيطة. تواصل معي عبر واتساب.
-        </div>
-      </div>
-    </div>
-    <div class="faq-item reveal reveal-delay-4">
-      <button class="faq-question">
-        هل الأوامر كلها بالعربي؟
-        <i class="fas fa-chevron-down"></i>
-      </button>
-      <div class="faq-answer">
-        <div class="faq-answer-inner">
-          أيوا، جميع الأوامر والرسائل والتنبيهات باللغة العربية. البوت مصمم خصيصًا للمستخدم العربي عشان يكون سهل الاستخدام.
-        </div>
-      </div>
-    </div>
-    <div class="faq-item reveal reveal-delay-5">
-      <button class="faq-question">
-        كيف أشتغل البوت على سيرفري؟
-        <i class="fas fa-chevron-down"></i>
-      </button>
-      <div class="faq-answer">
-        <div class="faq-answer-inner">
-          تحتاج سيرفر VPS (Linux)، Node.js، و MongoDB. في ملف README في كل بوت فيه شرح خطوة بخطوة لتركيب وتشغيل البوت. أو ممكن تستخدم خدمة الاستضافة بتاعتي.
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════ CONTACT ════════ -->
-<div class="contact-section" id="contact">
-  <div class="contact-inner">
-    <div style="text-align:center;margin-bottom:50px" class="reveal">
-      <div class="section-tag">تواصل معي</div>
-      <h2 class="section-title">تواصل مع <span style="color:var(--primary)">SONIC</span></h2>
-      <p class="section-desc" style="margin:0 auto 50px">
-        عندك سؤال أو طلب تعديل؟ تواصل معي وسأرد في أسرع وقت
-      </p>
-    </div>
-    <div class="contact-grid">
-      <div class="contact-info">
-        <div class="contact-item reveal">
-          <div class="ci-icon"><i class="fab fa-whatsapp"></i></div>
-          <div>
-            <div class="ci-label">واتساب</div>
-            <div class="ci-value">+212 698 078 610</div>
-          </div>
-        </div>
-        <div class="contact-item reveal reveal-delay-1">
-          <div class="ci-icon"><i class="fab fa-telegram"></i></div>
-          <div>
-            <div class="ci-label">تيليجرام</div>
-            <div class="ci-value">@b9_db</div>
-          </div>
-        </div>
-        <div class="contact-item reveal reveal-delay-2">
-          <div class="ci-icon"><i class="fas fa-bullhorn"></i></div>
-          <div>
-            <div class="ci-label">قناة واتساب</div>
-            <div class="ci-value">SONIC BOT Channel</div>
-          </div>
-        </div>
-        <div class="contact-item reveal reveal-delay-3">
-          <div class="ci-icon"><i class="fab fa-github"></i></div>
-          <div>
-            <div class="ci-label">جيتهب</div>
-            <div class="ci-value">github.com/sonic-bot-md</div>
-          </div>
-        </div>
-      </div>
-      <div class="contact-form-wrap reveal reveal-delay-2">
-        <form id="contactForm">
-          <div class="form-group">
-            <label>الاسم الكامل</label>
-            <input type="text" placeholder="اكتب اسمك هنا..." required>
-          </div>
-          <div class="form-group">
-            <label>رقم الواتساب</label>
-            <input type="tel" placeholder="+212 XXX XXX XXX" required>
-          </div>
-          <div class="form-group">
-            <label>الموضوع</label>
-            <input type="text" placeholder="مثال: طلب تعديل، استفسار...">
-          </div>
-          <div class="form-group">
-            <label>التفاصيل</label>
-            <textarea placeholder="اكتب تفاصيل طلبك أو سؤالك هنا..." required></textarea>
-          </div>
-          <button type="submit" class="form-submit">
-            <i class="fab fa-whatsapp"></i> إرسال عبر واتساب
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
+<!-- S5: CHALLENGES -->
+<div class="slide" data-s="5">
+<div style="max-width:980px;padding:0 40px;width:100%">
+<div style="text-align:center;margin-bottom:32px">
+<span class="a-up tag tag-red">🛡 Challenges We Faced</span>
+<h2 class="a-up d1" style="font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1;margin-top:12px">Five Major <span style="color:#f87171">Obstacles</span></h2>
+</div>
+<div class="a-up d2" style="display:flex;flex-direction:column;gap:10px;max-width:800px;margin:0 auto">
+<div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:10px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📵</div><div style="flex:1"><p style="font-weight:700;font-size:13px;margin-bottom:2px">Limited and Costly Communication Networks</p><p style="font-size:11px;color:#3d6494">4G is expensive, requires monthly subscriptions, unreliable in rural areas</p></div></div>
+<div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:10px;background:rgba(251,191,36,.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📏</div><div style="flex:1"><p style="font-weight:700;font-size:13px;margin-bottom:2px">Distance Issues Between LoRa Devices</p><p style="font-size:11px;color:#3d6494">Signal degradation over long distances between bus and station</p></div></div>
+<div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:10px;background:rgba(250,204,21,.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🔀</div><div style="flex:1"><p style="font-weight:700;font-size:13px;margin-bottom:2px">Bus Signal Interference</p><p style="font-size:11px;color:#3d6494">Multiple buses transmitting simultaneously causing confusion</p></div></div>
+<div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:10px;background:rgba(236,72,153,.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">❌</div><div style="flex:1"><p style="font-weight:700;font-size:13px;margin-bottom:2px">Device Not Receiving the Message</p><p style="font-size:11px;color:#3d6494">Message loss due to interference or environmental obstacles</p></div></div>
+<div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:10px;background:rgba(6,182,212,.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📐</div><div style="flex:1"><p style="font-weight:700;font-size:13px;margin-bottom:2px">Calculating Actual Distance on the Map</p><p style="font-size:11px;color:#3d6494">GPS coordinates don't translate to road distance</p></div></div>
+</div>
+<p class="a-fade d5" style="text-align:center;margin-top:16px;font-size:12px;color:rgba(255,255,255,.15)">Each challenge required a unique, engineered solution →</p>
+</div>
 </div>
 
-<!-- ════════ FOOTER ════════ -->
-<footer>
-  <div class="footer-inner">
-    <div class="footer-top">
-      <div class="footer-logo"><i class="fas fa-bolt" style="margin-left:6px"></i> SONIC<span>BOT</span></div>
-      <div class="footer-links">
-        <a href="#home">الرئيسية</a>
-        <a href="#about">عني</a>
-        <a href="#features">المميزات</a>
-        <a href="#skills">المهارات</a>
-        <a href="#projects">البوتات</a>
-        <a href="#services">الخدمات</a>
-        <a href="#contact">تواصل</a>
-      </div>
-    </div>
-    <div class="footer-divider"></div>
-    <div class="footer-bottom">
-      <div class="footer-copy">
-        &copy; 2026 <span>SONIC CODE</span> — Open Source Developer
-      </div>
-      <div class="footer-socials">
-        <a href="https://wa.me/212698078610" aria-label="واتساب"><i class="fab fa-whatsapp"></i></a>
-        <a href="https://t.me/b9_db" aria-label="تيليجرام"><i class="fab fa-telegram"></i></a>
-        <a href="https://whatsapp.com/channel/0029VbC9jBa7oQhlrjUPKa33" aria-label="القناة"><i class="fas fa-bullhorn"></i></a>
-        <a href="https://github.com" aria-label="جيتهب"><i class="fab fa-github"></i></a>
-      </div>
-    </div>
-  </div>
-</footer>
-
+<!-- S6: SOL LORA -->
+<div class="slide" data-s="6">
+<div style="max-width:1060px;padding:0 40px;width:100%">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center">
+<div>
+<span class="a-right tag tag-green">✓ Solution 1 of 5</span>
+<h2 class="a-right d1" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;line-height:1.1;margin-top:14px">No More <span style="color:#4ade80">Costly Networks</span></h2>
+<p class="a-right d3" style="color:var(--muted);font-size:13px;line-height:1.8;margin-top:14px">Using <strong style="color:#fff">LoRa technology</strong> — long-range communication with <strong style="color:#fff">very low power consumption</strong> and <strong style="color:#fff">no monthly subscription</strong> to cellular networks. Cost-effective for IoT data exchange.</p>
+<div class="a-right d5" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:18px">
+<span style="padding:5px 12px;background:rgba(34,197,94,.1);border-radius:8px;font-size:10px;font-weight:700;color:#4ade80;text-transform:uppercase">No Subscription</span>
+<span style="padding:5px 12px;background:rgba(34,197,94,.1);border-radius:8px;font-size:10px;font-weight:700;color:#4ade80;text-transform:uppercase">Low Power</span>
+<span style="padding:5px 12px;background:rgba(34,197,94,.1);border-radius:8px;font-size:10px;font-weight:700;color:#4ade80;text-transform:uppercase">Long Range</span>
+<span style="padding:5px 12px;background:rgba(34,197,94,.1);border-radius:8px;font-size:10px;font-weight:700;color:#4ade80;text-transform:uppercase">IoT Optimized</span>
+</div></div>
+<div class="a-scale d3"><div class="card" style="padding:28px;text-align:center">
+<div class="glow-icon blue" style="margin:0 auto 18px">📡</div>
+<p style="font-weight:700;font-size:20px;margin-bottom:4px" class="gt">LoRa — Long Range</p>
+<p style="font-size:10px;color:#3d6494;margin-bottom:22px">Spread spectrum modulation for IoT</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:16px"><p style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--blue-xl)">5-15km</p><p style="font-size:9px;color:#3d6494;text-transform:uppercase;margin-top:3px">Range</p></div>
+<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:16px"><p style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:#4ade80">$0</p><p style="font-size:9px;color:#3d6494;text-transform:uppercase;margin-top:3px">Monthly</p></div>
+<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:16px"><p style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:#fbbf24">~10mW</p><p style="font-size:9px;color:#3d6494;text-transform:uppercase;margin-top:3px">TX Power</p></div>
+<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:16px"><p style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:#f472b6">868MHz</p><p style="font-size:9px;color:#3d6494;text-transform:uppercase;margin-top:3px">Frequency</p></div>
+</div>
+<div style="margin-top:12px;padding:10px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.1);border-radius:10px"><p style="font-size:10px;color:#f87171"><strong>vs 4G:</strong> No SIM, works where cell towers don't reach, battery lasts days</p></div>
+</div></div>
+</div>
+</div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast">
-  <i class="fas fa-check-circle"></i>
-  <span id="toastText">تم الإرسال بنجاح!</span>
+<!-- S7: SOL MESH -->
+<div class="slide" data-s="7">
+<div style="max-width:1060px;padding:0 40px;width:100%">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center">
+<div class="a-scale d2" style="order:1"><div class="card" style="padding:20px;height:320px;position:relative;overflow:hidden;background:rgba(3,6,15,.8)"><canvas id="meshCanvas" style="width:100%;height:100%"></canvas><div style="position:absolute;bottom:8px;left:10px;display:flex;gap:12px;font-size:9px;color:#3d6494"><span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:var(--blue-xl);display:inline-block"></span>Node</span><span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block"></span>Station</span></div></div></div>
+<div style="order:2">
+<span class="a-left tag tag-green">✓ Solution 2 of 5</span>
+<h2 class="a-left d1" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;line-height:1.1;margin-top:14px">LoRa Mesh <span style="color:#c084fc">Network</span></h2>
+<p class="a-left d3" style="color:var(--muted);font-size:13px;line-height:1.8;margin-top:14px">Each node operates as both <strong style="color:#fff">transmitter and receiver</strong> simultaneously, relaying data to the next node until it reaches the final destination.</p>
+<div class="a-left d4" style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:start;gap:10px;padding:10px 12px;background:rgba(0,0,0,.2);border-radius:10px"><div class="icon-box ib-purple" style="width:32px;height:32px;font-size:13px">🔀</div><div><p style="font-weight:700;font-size:11px;margin-bottom:2px">Multi-hop Relay</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Extends coverage beyond single-link range</p></div></div>
+<div style="display:flex;align-items:start;gap:10px;padding:10px 12px;background:rgba(0,0,0,.2);border-radius:10px"><div class="icon-box ib-purple" style="width:32px;height:32px;font-size:13px">🛡️</div><div><p style="font-weight:700;font-size:11px;margin-bottom:2px">Fault Tolerance</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Alternative routes found automatically</p></div></div>
+<div style="display:flex;align-items:start;gap:10px;padding:10px 12px;background:rgba(0,0,0,.2);border-radius:10px"><div class="icon-box ib-purple" style="width:32px;height:32px;font-size:13px">📈</div><div><p style="font-weight:700;font-size:11px;margin-bottom:2px">Scalability</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Add nodes without reconfiguring</p></div></div>
+</div></div>
 </div>
+</div>
+</div>
+
+<!-- S8: SOL BUS ID -->
+<div class="slide" data-s="8">
+<div style="max-width:1060px;padding:0 40px;width:100%">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center">
+<div>
+<span class="a-right tag tag-green">✓ Solution 3 of 5</span>
+<h2 class="a-right d1" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;line-height:1.1;margin-top:14px">Unique <span style="color:#fbbf24">Bus ID</span></h2>
+<p class="a-right d3" style="color:var(--muted);font-size:13px;line-height:1.8;margin-top:14px">A <strong style="color:#fbbf24">unique identifier</strong> is added to each bus. Sent with every LoRa message containing location and speed data. The station immediately identifies the source and classifies it correctly.</p>
+<div class="a-right d5" style="margin-top:14px;padding:10px 16px;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.12);border-radius:10px"><p style="font-size:11px;color:#fbbf24"><strong>Result:</strong> No confusion between buses — each has a unique digital identity</p></div>
+</div>
+<div class="a-scale d3"><div class="card" style="padding:24px">
+<p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#3d6494;margin-bottom:14px;text-align:center">LoRa Message Structure</p>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:12px"><span style="font-size:16px">#</span><div style="flex:1"><p style="font-size:9px;color:#3d6494;text-transform:uppercase">Bus ID</p><p style="font-family:var(--mono);font-weight:700;color:var(--blue-xl);font-size:14px">07</p></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.1);border-radius:12px"><span style="font-size:16px">📍</span><div style="flex:1"><p style="font-size:9px;color:#3d6494;text-transform:uppercase">Latitude</p><p style="font-family:var(--mono);font-weight:700;color:var(--blue-xl);font-size:13px">33.9716° N</p></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.1);border-radius:12px"><span style="font-size:16px">📍</span><div style="flex:1"><p style="font-size:9px;color:#3d6494;text-transform:uppercase">Longitude</p><p style="font-family:var(--mono);font-weight:700;color:var(--blue-xl);font-size:13px">-6.8498° W</p></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.1);border-radius:12px"><span style="font-size:16px">⚡</span><div style="flex:1"><p style="font-size:9px;color:#3d6494;text-transform:uppercase">Speed</p><p style="font-family:var(--mono);font-weight:700;color:#4ade80;font-size:13px">42 km/h</p></div></div>
+</div>
+<div style="display:flex;gap:8px;margin-top:12px;justify-content:center">
+<div style="padding:5px 14px;background:rgba(37,99,235,.15);border-radius:8px;text-align:center"><p style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue-xl)">#07</p></div>
+<div style="padding:5px 14px;background:rgba(96,165,250,.08);border-radius:8px;text-align:center"><p style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue-l)">#12</p></div>
+<div style="padding:5px 14px;background:rgba(16,185,129,.08);border-radius:8px;text-align:center"><p style="font-family:var(--mono);font-size:13px;font-weight:700;color:#34d399">#23</p></div>
+</div></div></div>
+</div>
+</div>
+</div>
+
+<!-- S9: SOL ACK -->
+<div class="slide" data-s="9">
+<div style="max-width:900px;padding:0 40px;width:100%">
+<div style="text-align:center;margin-bottom:28px">
+<span class="a-up tag tag-green">✓ Solution 4 of 5</span>
+<h2 class="a-up d1" style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.1;margin-top:12px">ACK <span style="color:#f472b6">Mechanism</span></h2>
+<p class="a-up d2" style="color:var(--muted);font-size:13px;margin-top:6px;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.7">Simple yet highly effective — if the bus doesn't receive acknowledgment within a timeout, it automatically resends.</p>
+</div>
+<div class="a-up d3" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+<div class="card" style="width:100%;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+<div style="display:flex;align-items:center;gap:12px"><div style="width:46px;height:46px;border-radius:14px;background:rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;font-size:20px">🚌</div><div><p style="font-weight:700;font-size:13px">Bus Node</p></div></div>
+<div style="display:flex;align-items:center;gap:8px"><span class="ack-label" style="background:rgba(37,99,235,.2);color:var(--blue-xl)">DATA →</span><div style="width:70px;height:2px;background:var(--blue-xl);position:relative"><div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:8px;height:8px;background:var(--blue-xl);border-radius:50%;animation:busMove 1.5s ease-in-out infinite"></div></div></div>
+<div style="display:flex;align-items:center;gap:12px"><div><p style="font-weight:700;font-size:13px">Station</p></div><div style="width:46px;height:46px;border-radius:14px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;font-size:20px">🏢</div></div>
+</div>
+<div style="color:rgba(255,255,255,.08);font-size:16px">↓</div>
+<div class="card" style="width:100%;padding:18px 22px;background:rgba(34,197,94,.04);border-color:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap">
+<span class="ack-label" style="background:rgba(34,197,94,.15);color:#4ade80">← ACK</span>
+<span style="font-size:12px;color:var(--muted)">Station confirms → Bus receives ✓</span>
+</div>
+<div style="color:rgba(255,255,255,.08);font-size:16px">↓</div>
+<div class="card" style="width:100%;padding:18px 22px;background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.15);display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap">
+<span class="ack-label" style="background:rgba(239,68,68,.15);color:#f87171">NO ACK?</span>
+<span style="font-size:12px;color:var(--muted)">within timeout</span>
+<span style="color:rgba(255,255,255,.12)">→</span>
+<span class="ack-label" style="background:rgba(251,191,36,.15);color:#fbbf24">AUTO RETRY</span>
+<span style="font-size:12px;color:#fbbf24;font-weight:600">until confirmed</span>
+</div>
+<div class="a-fade d5" style="padding:10px 18px;background:rgba(37,99,235,.06);border:1px solid var(--border2);border-radius:10px;display:flex;align-items:center;gap:8px"><span style="font-size:14px">🔄</span><p style="font-size:11px;color:var(--blue-xl)"><strong>Guaranteed delivery:</strong> No data is ever silently lost</p></div>
+</div>
+</div>
+</div>
+
+<!-- S10: SOL HAVERSINE -->
+<div class="slide" data-s="10">
+<div style="max-width:1060px;padding:0 40px;width:100%">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start">
+<div>
+<span class="a-right tag tag-green">✓ Solution 5 of 5</span>
+<h2 class="a-right d1" style="font-size:clamp(1.6rem,3vw,2.4rem);font-weight:700;line-height:1.1;margin-top:14px">Haversine <span class="gt">Formula</span></h2>
+<p class="a-right d3" style="color:var(--muted);font-size:12.5px;line-height:1.8;margin-top:12px">Calculates approximate distance between two points on Earth's surface. Based on Earth's radius — <strong style="color:#fff">very accurate</strong> compared to simpler methods.</p>
+<div class="a-right d4" style="margin-top:12px;padding:12px 16px;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.12);border-radius:10px"><p style="font-size:11px;color:#fbbf24;line-height:1.6"><strong>⚠ Note:</strong> Not 100% precise — affected by terrain, non-linear roads, elevation. But <strong>more than sufficient</strong> for tracking. Widely used in GPS & IoT.</p></div>
+<div class="a-right d5" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+<div style="background:rgba(0,0,0,.3);border-radius:10px;padding:12px;text-align:center"><p style="font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--cyan-l)">6,371 km</p><p style="font-size:8px;color:#3d6494;text-transform:uppercase;margin-top:2px">Earth Radius</p></div>
+<div style="background:rgba(0,0,0,.3);border-radius:10px;padding:12px;text-align:center"><p style="font-family:var(--mono);font-size:1rem;font-weight:700;color:#4ade80">~99.9%</p><p style="font-size:8px;color:#3d6494;text-transform:uppercase;margin-top:2px">Accuracy</p></div>
+</div>
+<div class="a-right d6" style="margin-top:10px;font-size:11px;color:#4d7bad;line-height:1.7"><strong style="color:var(--blue-xl);font-family:var(--mono)">φ</strong> = Latitude · <strong style="color:var(--blue-xl);font-family:var(--mono)">λ</strong> = Longitude · <strong style="color:var(--blue-xl);font-family:var(--mono)">R</strong> = 6371km · <strong style="color:var(--blue-xl);font-family:var(--mono)">d</strong> = Distance</div>
+</div>
+<div class="a-scale d2">
+<div class="formula-box" style="padding:18px;margin-bottom:10px"><div class="fl" style="font-size:11px">a = sin²(Δφ/2) + cos(φ₁)·cos(φ₂)·sin²(Δλ/2)</div><div class="fs">─────────────────────────</div><div class="fl" style="font-size:11px">c = 2·atan2(√a, √(1−a))</div><div class="fs">─────────────────────────</div><div class="fr" style="font-size:14px">d = R · c</div></div>
+<div class="code-block"><div class="cb-header"><div class="cb-dot r"></div><div class="cb-dot y"></div><div class="cb-dot g"></div><span class="cb-filename">haversine.cpp</span></div>
+<pre><span class="cm">// Haversine Formula</span>
+<span class="kw">#define</span> R <span class="num">6371000</span>
+
+<span class="kw">double</span> <span class="fn">haversine</span>(<span class="kw">double</span> lat1, <span class="kw">double</span> lon1,
+                  <span class="kw">double</span> lat2, <span class="kw">double</span> lon2) {
+  <span class="kw">double</span> dLat = <span class="fn">toRad</span>(lat2 - lat1);
+  <span class="kw">double</span> dLon = <span class="fn">toRad</span>(lon2 - lon1);
+  <span class="kw">double</span> a = <span class="fn">sin</span>(dLat/<span class="num">2</span>)*<span class="fn">sin</span>(dLat/<span class="num">2</span>) +
+    <span class="fn">cos</span>(<span class="fn">toRad</span>(lat1))*<span class="fn">cos</span>(<span class="fn">toRad</span>(lat2))*
+    <span class="fn">sin</span>(dLon/<span class="num">2</span>)*<span class="fn">sin</span>(dLon/<span class="num">2</span>);
+  <span class="kw">double</span> c = <span class="num">2</span>*<span class="fn">atan2</span>(<span class="fn">sqrt</span>(a),<span class="fn">sqrt</span>(<span class="num">1</span>-a));
+  <span class="kw">return</span> R * c; <span class="cm">// meters</span>
+}
+<span class="cm">// ETA in minutes</span>
+<span class="kw">int</span> <span class="fn">calcETA</span>(<span class="kw">double</span> d, <span class="kw">double</span> spd) {
+  <span class="kw">if</span>(spd&lt;<span class="num">1</span>)<span class="kw">return</span> -<span class="num">1</span>;
+  <span class="kw">return</span>(<span class="kw">int</span>)((d/<span class="num">1000.0</span>)/spd*<span class="num">60</span>);
+}</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- S11: HW BUS -->
+<div class="slide" data-s="11">
+<div style="max-width:1000px;padding:0 40px;width:100%">
+<div style="text-align:center;margin-bottom:28px">
+<span class="a-up tag">⚙ Hardware</span>
+<h2 class="a-up d1" style="font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1;margin-top:12px">Bus Node <span style="color:rgba(255,255,255,.25)">Components</span></h2>
+<p class="a-up d2" style="font-size:12px;color:var(--muted)">Mobile device installed inside each bus</p>
+</div>
+<div class="a-up d3" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-blue" style="font-size:20px">💻</div><div><p style="font-weight:700;font-size:14px">ESP32</p><p style="font-size:10px;color:#3d6494">Main microcontroller</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Reads GPS data, prepares LoRa packet with Bus ID + coordinates + speed, manages ACK timeout and retry.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot"></span>Dual-core 240MHz</div><div class="spec"><span class="spec-dot"></span>520KB SRAM, 4MB flash</div><div class="spec"><span class="spec-dot"></span>WiFi + Bluetooth built-in</div></div></div>
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-blue" style="font-size:20px">📻</div><div><p style="font-weight:700;font-size:14px">LoRa RA-01</p><p style="font-size:10px;color:#3d6494">SX1278 transceiver</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Handles long-range radio at 433MHz with SPI interface. Spread spectrum modulation for robust communication.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot"></span>SX1278 — 433MHz ISM</div><div class="spec"><span class="spec-dot"></span>+20dBm max TX power</div><div class="spec"><span class="spec-dot"></span>SPI to ESP32</div></div></div>
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-blue" style="font-size:20px">🛰️</div><div><p style="font-weight:700;font-size:14px">GPS Module</p><p style="font-size:10px;color:#3d6494">Satellite positioning</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Provides real-time lat/lon from GPS satellites. Data parsed from NMEA sentences at regular intervals.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot"></span>UART serial communication</div><div class="spec"><span class="spec-dot"></span>NMEA 0183 protocol</div><div class="spec"><span class="spec-dot"></span>2.5m CEP accuracy</div></div></div>
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-blue" style="font-size:20px">⏻</div><div><p style="font-weight:700;font-size:14px">ON/OFF Switch</p><p style="font-size:10px;color:#3d6494">Power control</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Toggle switch for the bus driver to power on/off the tracking unit without opening the enclosure.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot"></span>ESP32 enable pin</div><div class="spec"><span class="spec-dot"></span>LED power indicator</div><div class="spec"><span class="spec-dot"></span>External access</div></div></div>
+</div>
+</div>
+</div>
+
+<!-- S12: HW STATION -->
+<div class="slide" data-s="12">
+<div style="max-width:1000px;padding:0 40px;width:100%">
+<div style="text-align:center;margin-bottom:28px">
+<span class="a-up tag tag-green">⚙ Hardware</span>
+<h2 class="a-up d1" style="font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1;margin-top:12px">Station Node <span style="color:rgba(255,255,255,.25)">Components</span></h2>
+<p class="a-up d2" style="font-size:12px;color:var(--muted)">Stationary device at each bus stop</p>
+</div>
+<div class="a-up d3" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-green" style="font-size:20px">🖥️</div><div><p style="font-weight:700;font-size:14px">LCD CYD ESP32</p><p style="font-size:10px;color:#3d6494">Color TFT + MCU</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Receives LoRa data, processes it, calculates distance/ETA, displays results on color TFT screen for passengers.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>2.4" TFT 320×240</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Resistive touch</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>WiFi for web server</div></div></div>
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-green" style="font-size:20px">📻</div><div><p style="font-weight:700;font-size:14px">LoRa Module</p><p style="font-size:10px;color:#3d6494">Receiver unit</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Configured in receive mode. Listens for packets from any bus, decodes them, sends ACK confirmations back.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Continuous receive mode</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Auto-ACK on decode</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>CRC verification</div></div></div>
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-green" style="font-size:20px">🔋</div><div><p style="font-weight:700;font-size:14px">Lithium Battery</p><p style="font-size:10px;color:#3d6494">Portable power</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Rechargeable lithium battery for standalone operation at bus stops without mains electricity access.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Li-Po 3.7V nominal</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>TP4056 charger</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>USB-C port</div></div></div>
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-green" style="font-size:20px">⏻</div><div><p style="font-weight:700;font-size:14px">ON/OFF Switch</p><p style="font-size:10px;color:#3d6494">Power management</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Station staff can power the device on/off as needed for maintenance or during off-service hours.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Easy toggle control</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Power LED indicator</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Low battery warning</div></div></div>
+</div>
+</div>
+</div>
+
+<!-- S13: DATA FLOW -->
+<div class="slide" data-s="13">
+<div style="max-width:1100px;padding:0 32px;width:100%">
+<div style="text-align:center;margin-bottom:24px">
+<span class="a-up tag">⚡ Working Mechanism</span>
+<h2 class="a-up d1" style="font-size:clamp(1.5rem,3vw,2.4rem);font-weight:700;line-height:1.1;margin-top:10px">Data Flow — <span class="gt">5 Stages</span></h2>
+<p class="a-up d2" style="font-size:12px;color:var(--muted);margin-top:4px">Precise sequence ensuring safe and efficient data transmission</p>
+</div>
+<div class="a-up d3" style="display:flex;align-items:stretch;justify-content:center;gap:6px;flex-wrap:wrap">
+<div class="card" style="padding:16px;width:175px;text-align:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px">🛰️</div><span class="step-badge" style="margin:0 auto 6px;display:flex">1</span><p style="font-weight:700;font-size:12px;margin-bottom:5px">Data Collection</p><p style="font-size:10px;color:#3d6494;line-height:1.5">ESP32 receives GPS coordinates + Bus ID</p></div>
+<div style="display:flex;align-items:center;color:rgba(255,255,255,.06);font-size:14px;padding-bottom:32px;flex-shrink:0">›</div>
+<div class="card" style="padding:16px;width:175px;text-align:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px">📻</div><span class="step-badge" style="margin:0 auto 6px;display:flex;background:rgba(168,85,247,.2);border-color:rgba(168,85,247,.3);color:#c084fc">2</span><p style="font-weight:700;font-size:12px;margin-bottom:5px">LoRa TX</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Low freq, low power, long range</p></div>
+<div style="display:flex;align-items:center;color:rgba(255,255,255,.06);font-size:14px;padding-bottom:32px;flex-shrink:0">›</div>
+<div class="card" style="padding:16px;width:175px;text-align:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(59,130,246,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px">📥</div><span class="step-badge" style="margin:0 auto 6px;display:flex;background:rgba(59,130,246,.2);border-color:rgba(59,130,246,.3);color:var(--blue-l)">3</span><p style="font-weight:700;font-size:12px;margin-bottom:5px">Reception</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Station decodes packet, sends ACK</p></div>
+<div style="display:flex;align-items:center;color:rgba(255,255,255,.06);font-size:14px;padding-bottom:32px;flex-shrink:0">›</div>
+<div class="card" style="padding:16px;width:175px;text-align:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(251,146,60,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px">⚙️</div><span class="step-badge" style="margin:0 auto 6px;display:flex;background:rgba(251,146,60,.2);border-color:rgba(251,146,60,.3);color:#fb923c">4</span><p style="font-weight:700;font-size:12px;margin-bottom:5px">Processing</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Distance & ETA via Haversine</p></div>
+<div style="display:flex;align-items:center;color:rgba(255,255,255,.06);font-size:14px;padding-bottom:32px;flex-shrink:0">›</div>
+<div class="card" style="padding:16px;width:175px;text-align:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px">📺</div><span class="step-badge" style="margin:0 auto 6px;display:flex;background:rgba(34,197,94,.2);border-color:rgba(34,197,94,.3);color:#4ade80">5</span><p style="font-weight:700;font-size:12px;margin-bottom:5px">Display</p><p style="font-size:10px;color:#3d6494;line-height:1.5">TFT screen + web interface</p></div>
+</div>
+<div class="a-up d5" style="display:flex;justify-content:center;margin-top:16px">
+<div style="display:flex;align-items:center;gap:18px;padding:12px 24px;background:rgba(0,0,0,.3);border:1px solid var(--border2);border-radius:12px">
+<div style="text-align:center"><p style="font-size:8px;color:#3d6494;text-transform:uppercase">Location</p><p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px">33.9716°N</p></div>
+<div style="width:1px;height:26px;background:var(--border)"></div>
+<div style="text-align:center"><p style="font-size:8px;color:#3d6494;text-transform:uppercase">Speed</p><p style="font-family:var(--mono);font-size:11px;color:#4ade80;margin-top:2px">42 km/h</p></div>
+<div style="width:1px;height:26px;background:var(--border)"></div>
+<div style="text-align:center"><p style="font-size:8px;color:#3d6494;text-transform:uppercase">Distance</p><p style="font-family:var(--mono);font-size:11px;color:var(--cyan-l);margin-top:2px">1,250 m</p></div>
+<div style="width:1px;height:26px;background:var(--border)"></div>
+<div style="text-align:center"><p style="font-size:8px;color:#3d6494;text-transform:uppercase">ETA</p><p style="font-family:var(--mono);font-size:11px;color:#fbbf24;margin-top:2px">~3 min</p></div>
+<div style="width:1px;height:26px;background:var(--border)"></div>
+<div style="text-align:center"><p style="font-size:8px;color:#3d6494;text-transform:uppercase">Bus ID</p><p style="font-family:var(--mono);font-size:11px;color:var(--blue-xl);margin-top:2px">#07</p></div>
+</div></div>
+</div>
+</div>
+
+<!-- S14: COMPARISON -->
+<div class="slide" data-s="14">
+<div style="max-width:920px;padding:0 40px;width:100%">
+<div style="text-align:center;margin-bottom:24px">
+<span class="a-up tag tag-purple">⚖ Comparison</span>
+<h2 class="a-up d1" style="font-size:clamp(1.5rem,3vw,2.4rem);font-weight:700;line-height:1.1;margin-top:10px">LoRa Track vs <span class="gt">Traditional Solutions</span></h2>
+</div>
+<div class="a-up d2 card" style="overflow:hidden"><div style="overflow-x:auto">
+<table class="cmp-table">
+<thead><tr><th>Criteria</th><th>LoRa Track ✦</th><th>GPS + 4G</th><th>GPS + WiFi</th><th>RFID</th></tr></thead>
+<tbody>
+<tr><td class="feat">Needs Internet</td><td><span class="yes">✗ No</span></td><td><span class="no">✓ Yes</span></td><td><span class="no">✓ Yes</span></td><td><span class="yes">✗ No</span></td></tr>
+<tr><td class="feat">Real-time Tracking</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="no">✗ Limited</span></td><td><span class="no">✗ Points only</span></td></tr>
+<tr><td class="feat">Coverage Range</td><td class="amber">5-15 km</td><td>Per network</td><td>50-100 m</td><td>1-5 m</td></tr>
+<tr><td class="feat">Power Consumption</td><td class="amber">Very Low</td><td><span class="no">High</span></td><td>Medium</td><td>Low</td></tr>
+<tr><td class="feat">Operating Cost</td><td class="amber">Near Zero</td><td><span class="no">High (SIM)</span></td><td>Medium</td><td>Low</td></tr>
+<tr><td class="feat">Distance/ETA Calc</td><td><span class="yes">✓ Auto</span></td><td><span class="yes">✓</span></td><td><span class="no">✗</span></td><td><span class="no">✗</span></td></tr>
+<tr><td class="feat">Fault Tolerance</td><td class="amber">High (Mesh)</td><td><span class="no">Low</span></td><td><span class="no">Low</span></td><td>Medium</td></tr>
+<tr><td class="feat">Local LCD Display</td><td><span class="yes">✓ TFT</span></td><td><span class="no">✗</span></td><td><span class="no">✗</span></td><td><span class="yes">✓</span></td></tr>
+<tr><td class="feat">Multi-bus Support</td><td><span class="yes">✓ Bus ID</span></td><td><span class="yes">✓</span></td><td><span class="no">✗</span></td><td><span class="no">✗</span></td></tr>
+</tbody></table></div></div>
+<div class="a-fade d4" style="text-align:center;margin-top:14px"><p style="font-size:11px;color:var(--blue-xl)">LoRa Track is the <strong>only solution</strong> with real-time tracking + distance calc + local display — all without internet</p></div>
+</div>
+</div>
+
+<!-- S15: LIVE SIM -->
+<div class="slide" data-s="15">
+<div style="max-width:1020px;padding:0 40px;width:100%">
+<div style="text-align:center;margin-bottom:20px">
+<span class="a-up tag tag-green"><span class="dot-live"></span> Live Simulation</span>
+<h2 class="a-up d1" style="font-size:clamp(1.5rem,3vw,2.4rem);font-weight:700;line-height:1.1;margin-top:10px">System <span style="color:#4ade80">In Action</span></h2>
+</div>
+<div class="a-up d2" style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px">
+<div><div class="mini-map"><div class="mini-map-grid"></div>
+<div class="mini-road" style="width:78%;height:3px;top:38%;left:11%"></div><div class="mini-road" style="width:3px;height:55%;top:22%;left:47%"></div><div class="mini-road" style="width:55%;height:3px;top:62%;left:25%"></div><div class="mini-road" style="width:3px;height:38%;top:38%;left:73%"></div>
+<div class="mini-station" style="top:36%;left:13%"></div><div style="position:absolute;top:calc(36% + 14px);left:5%;font-size:8px;color:#3d6494;white-space:nowrap;z-index:4">Main Station</div>
+<div class="mini-station" style="top:60%;left:27%"></div><div style="position:absolute;top:calc(60% + 14px);left:18%;font-size:8px;color:#3d6494;white-space:nowrap;z-index:4">Mid Stop</div>
+<div class="mini-station" style="top:36%;left:71%"></div><div style="position:absolute;top:calc(36% + 14px);left:63%;font-size:8px;color:#3d6494;white-space:nowrap;z-index:4">End Station</div>
+<div class="mini-bus" id="mapBus" style="top:35%;left:28%">🚌</div>
+<div style="position:absolute;top:8px;right:8px;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.7);border-radius:6px;padding:4px 8px;font-size:9px;font-weight:600;z-index:10"><span class="dot-live" style="width:5px;height:5px"></span><span style="color:#22c55e">LIVE</span></div>
+</div></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="card" style="padding:0"><div style="padding:8px 14px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between"><h3 style="font-size:12px;font-weight:700">🚌 Bus #07</h3><span class="dot-live" style="width:5px;height:5px"></span></div>
+<div style="display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px solid rgba(37,99,235,.05);font-size:11px"><span style="color:var(--muted)">Latitude</span><span style="font-family:var(--mono);font-weight:600" id="dLat">33.971590</span></div>
+<div style="display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px solid rgba(37,99,235,.05);font-size:11px"><span style="color:var(--muted)">Longitude</span><span style="font-family:var(--mono);font-weight:600" id="dLon">-6.849813</span></div>
+<div style="display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px solid rgba(37,99,235,.05);font-size:11px"><span style="color:var(--muted)">Speed</span><span style="font-family:var(--mono);color:#22c55e;font-weight:600" id="dSpd">38.5 km/h</span></div>
+<div style="display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px solid rgba(37,99,235,.05);font-size:11px"><span style="color:var(--muted)">Distance</span><span style="font-family:var(--mono);color:var(--cyan-l);font-weight:600" id="dDist">1250 m</span></div>
+<div style="display:flex;justify-content:space-between;padding:7px 14px;font-size:11px"><span style="color:var(--muted)">ETA</span><span style="font-family:var(--mono);color:#fbbf24;font-weight:600" id="dETA">2 min</span></div>
+</div>
+<div class="card" style="padding:14px"><h3 style="font-size:11px;font-weight:700;margin-bottom:10px">📶 LoRa Signal</h3>
+<div style="display:flex;align-items:flex-end;gap:4px;height:28px" id="sigBars"><div style="width:10px;height:6px;background:#22c55e;border-radius:2px"></div><div style="width:10px;height:12px;background:#22c55e;border-radius:2px"></div><div style="width:10px;height:18px;background:#22c55e;border-radius:2px"></div><div style="width:10px;height:24px;background:var(--blue-xl);border-radius:2px"></div><div style="width:10px;height:28px;background:#1e3a6e;border-radius:2px"></div></div>
+<p style="font-size:9px;color:#3d6494;font-family:var(--mono);margin-top:5px;direction:ltr" id="sigRSSI">RSSI: -87 dBm | SNR: 8.5 dB</p></div>
+</div></div>
+</div>
+</div>
+
+<!-- S16: FUTURE -->
+<div class="slide" data-s="16">
+<div style="max-width:1000px;padding:0 40px;width:100%">
+<div style="text-align:center;margin-bottom:28px">
+<span class="a-up tag tag-amber">🚀 Future Prospects</span>
+<h2 class="a-up d1" style="font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1;margin-top:12px">Project <span style="color:rgba(255,255,255,.3)">Future</span></h2>
+</div>
+<div class="a-up d2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.2);display:flex;align-items:center;justify-content:center;font-size:22px">📱</div><div><h3 style="font-size:15px;font-weight:700">Mobile Application</h3></div></div><p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">Creating a <strong style="color:#fff">standalone mobile app</strong> for passengers instead of the web interface to enhance user experience.</p><div style="display:flex;gap:6px"><span style="padding:3px 8px;background:rgba(96,165,250,.08);border-radius:5px;font-size:9px;color:var(--blue-xl)">Push Notifications</span><span style="padding:3px 8px;background:rgba(96,165,250,.08);border-radius:5px;font-size:9px;color:var(--blue-xl)">Offline Mode</span></div></div>
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.2);display:flex;align-items:center;justify-content:center;font-size:22px">🌍</div><div><h3 style="font-size:15px;font-weight:700">City-Wide Coverage</h3></div></div><p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">With <strong style="color:#fff">funding</strong>, expand nodes to cover the <strong style="color:#4ade80">entire city</strong> — and why not <strong style="color:#4ade80">all of Morocco</strong>.</p><div style="display:flex;gap:6px"><span style="padding:3px 8px;background:rgba(34,197,94,.08);border-radius:5px;font-size:9px;color:#4ade80">Mesh Expansion</span><span style="padding:3px 8px;background:rgba(34,197,94,.08);border-radius:5px;font-size:9px;color:#4ade80">Scalable</span></div></div>
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.2);display:flex;align-items:center;justify-content:center;font-size:22px">🌡️</div><div><h3 style="font-size:15px;font-weight:700">Additional Sensors</h3></div></div><p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">Integrating sensors to measure bus <strong style="color:#fff">temperature</strong> or monitor <strong style="color:#fff">driver's behavior</strong> for safety.</p><div style="display:flex;gap:6px"><span style="padding:3px 8px;background:rgba(251,146,60,.08);border-radius:5px;font-size:9px;color:#fb923c">Temperature</span><span style="padding:3px 8px;background:rgba(251,146,60,.08);border-radius:5px;font-size:9px;color:#fb923c">Driver Monitor</span></div></div>
+<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.2);display:flex;align-items:center;justify-content:center;font-size:22px">📡</div><div><h3 style="font-size:15px;font-weight:700">Wider Coverage</h3></div></div><p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">LoRa's range extends for <strong style="color:#c084fc">kilometers</strong> — ideal for <strong style="color:#c084fc">rural or open areas</strong> where traditional connectivity fails.</p><div style="display:flex;gap:6px"><span style="padding:3px 8px;background:rgba(168,85,247,.08);border-radius:5px;font-size:9px;color:#c084fc">Rural Areas</span><span style="padding:3px 8px;background:rgba(168,85,247,.08);border-radius:5px;font-size:9px;color:#c084fc">No Infrastructure</span></div></div>
+</div>
+</div>
+</div>
+
+<!-- S17: LIVE CREDS -->
+<div class="slide" data-s="17">
+<div style="max-width:480px;padding:0 40px;text-align:center">
+<div class="a-scale"><div style="width:72px;height:72px;border-radius:22px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);display:flex;align-items:center;justify-content:center;margin:0 auto 18px"><span style="width:16px;height:16px;background:#22c55e;border-radius:50%;display:block;animation:blink 2s infinite;box-shadow:0 0 14px rgba(34,197,94,.5)"></span></div></div>
+<h2 class="a-up d1" style="font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1">Project <span style="color:#4ade80">Live</span></h2>
+<p class="a-up d2" style="font-size:13px;color:var(--muted);margin-top:6px">Connect to the live dashboard</p>
+<div class="a-up d3" style="margin-top:24px"><div class="card" style="padding:24px;text-align:left">
+<div style="margin-bottom:16px"><p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#3d6494;margin-bottom:6px">Network SSID</p><div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:12px"><span style="font-size:16px">📶</span><span style="font-family:var(--mono);font-size:14px;font-weight:600">BusTrackerAP</span><button onclick="copyText('BusTrackerAP',this)" style="margin-left:auto;width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:14px">📋</button></div></div>
+<div><p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#3d6494;margin-bottom:6px">Password</p><div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:12px"><span style="font-size:16px">🔒</span><span style="font-family:var(--mono);font-size:14px;font-weight:600">safarimakers</span><button onclick="copyText('safarimakers',this)" style="margin-left:auto;width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:14px">📋</button></div></div>
+<div style="margin-top:12px;padding:12px 16px;background:rgba(37,99,235,.06);border:1px solid var(--border2);border-radius:10px"><p style="font-size:11px;color:var(--blue-xl)"><strong>Steps:</strong> ① Connect to WiFi → ② Open browser → ③ Go to ESP32 IP → ④ View dashboard</p></div>
+</div></div>
+</div>
+</div>
+
+<!-- S18: SUMMARY -->
+<div class="slide" data-s="18">
+<div style="max-width:960px;padding:0 40px;width:100%">
+<div style="text-align:center;margin-bottom:28px">
+<span class="a-up tag">📊 Summary</span>
+<h2 class="a-up d1" style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.1;margin-top:12px">Key <span class="gt">Takeaways</span></h2>
+</div>
+<div class="a-up d2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+<div class="stat-card"><div class="stat-num">5km+</div><div class="stat-unit">LoRa Range</div><div class="stat-label">Without mesh</div></div>
+<div class="stat-card"><div class="stat-num">$0</div><div class="stat-unit">Monthly Cost</div><div class="stat-label">No SIM needed</div></div>
+<div class="stat-card"><div class="stat-num">5</div><div class="stat-unit">Challenges Solved</div><div class="stat-label">Unique solutions</div></div>
+<div class="stat-card"><div class="stat-num">2</div><div class="stat-unit">Devices</div><div class="stat-label">Bus + Station</div></div>
+</div>
+<div class="a-up d3" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">LoRa replaces cellular</p><p style="font-size:11px;color:#3d6494;line-height:1.5">No fees, works in rural areas, low power</p></div></div>
+<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">Mesh extends coverage</p><p style="font-size:11px;color:#3d6494;line-height:1.5">Multi-hop, fault tolerant, scalable</p></div></div>
+<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">Bus ID prevents interference</p><p style="font-size:11px;color:#3d6494;line-height:1.5">Unique ID in every packet</p></div></div>
+<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">ACK ensures delivery</p><p style="font-size:11px;color:#3d6494;line-height:1.5">Auto-retry — no silent loss</p></div></div>
+<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">Haversine calculates distance</p><p style="font-size:11px;color:#3d6494;line-height:1.5">Earth-aware, 99.9% accurate</p></div></div>
+<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">Dual display output</p><p style="font-size:11px;color:#3d6494;line-height:1.5">TFT screen + web interface</p></div></div>
+</div>
+</div>
+</div>
+
+<!-- S19: THANK YOU -->
+<div class="slide" data-s="19">
+<div style="max-width:580px;padding:0 40px;text-align:center">
+<div class="a-scale"><div class="glow-icon blue" style="margin:0 auto 24px;animation:float 6s ease-in-out infinite">📡</div></div>
+<h2 class="a-up d2" style="font-size:clamp(2.5rem,7vw,4.5rem);font-weight:700;line-height:.95;background:linear-gradient(135deg,#fff,#93c5fd,var(--cyan-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Thank You</h2>
+<p class="a-up d3" style="font-size:15px;color:var(--muted);margin-top:14px;line-height:1.7">We look forward to your<br>questions and inquiries.</p>
+<div class="a-fade d5" style="display:flex;justify-content:center;gap:10px;margin-top:24px">
+<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 16px rgba(168,85,247,.2)">OA</div>
+<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 16px rgba(59,130,246,.2)">RG</div>
+<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#10b981,#14b8a6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 16px rgba(16,185,129,.2)">IF</div>
+</div>
+<div class="a-fade d6" style="font-size:11px;color:rgba(255,255,255,.22);margin-top:8px">Oussama El Assiri · Rayan El Ghazali · Imran El Fachtioui</div>
+<div class="a-fade d7" style="margin-top:18px;padding:10px 20px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:999px;display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)"><span>Team</span><strong style="color:var(--white)">SAFARIMAKERS</strong><span>·</span><span>Supervised by Mohamed Abdelake</span></div>
+<div class="a-fade d9" style="margin-top:28px;font-size:10px;color:rgba(255,255,255,.1)">Press ← to go back</div>
+</div>
+</div>
+
+</div><!-- /deck -->
 
 <script>
-/* ═══════════════════════════════════════
-   LOADING SCREEN
-   ═══════════════════════════════════════ */
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('loader').classList.add('hidden');
-  }, 2000);
-});
+var slides=document.querySelectorAll('.slide');
+var total=slides.length;
+var cur=0;
+var pbar=document.getElementById('pbar');
+var sNum=document.getElementById('sNum');
+var cFill=document.getElementById('cFill');
+var prevBtn=document.getElementById('prevBtn');
+var nextBtn=document.getElementById('nextBtn');
+var kbHint=document.getElementById('kbHint');
+sTotal.textContent=String(total).padStart(2,'0');
 
-/* ═══════════════════════════════════════
-   CUSTOM CURSOR
-   ═══════════════════════════════════════ */
-const dot = document.getElementById('cursorDot');
-const ring = document.getElementById('cursorRing');
-let cursorX = 0, cursorY = 0;
-let ringX = 0, ringY = 0;
-
-if ('ontouchstart' in window) {
-  dot.style.display = 'none';
-  ring.style.display = 'none';
+function go(i){
+  if(i<0||i>=total)return;
+  slides[cur].classList.remove('active');
+  var els=slides[cur].querySelectorAll('.a-up,.a-fade,.a-scale,.a-left,.a-right');
+  for(var e=0;e<els.length;e++){els[e].style.animation='none';els[e].offsetHeight;els[e].style.animation='';}
+  cur=i;
+  slides[cur].classList.add('active');
+  var pct=cur/(total-1)*100;
+  pbar.style.width=pct+'%';
+  sNum.textContent=String(cur+1).padStart(2,'0');
+  cFill.style.width=pct+'%';
+  prevBtn.classList.toggle('vis',cur>0);
+  nextBtn.classList.toggle('vis',cur<total-1);
+  kbHint.style.opacity=cur===0?'1':'0';
 }
 
-document.addEventListener('mousemove', e => {
-  cursorX = e.clientX;
-  cursorY = e.clientY;
-  dot.style.left = cursorX - 4 + 'px';
-  dot.style.top = cursorY - 4 + 'px';
+nextBtn.addEventListener('click',function(){go(cur+1)});
+prevBtn.addEventListener('click',function(){go(cur-1)});
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();go(cur+1)}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(cur-1)}
+  if(e.key==='Home'){e.preventDefault();go(0)}
+  if(e.key==='End'){e.preventDefault();go(total-1)}
 });
 
-function animateCursor() {
-  ringX += (cursorX - ringX) * 0.15;
-  ringY += (cursorY - ringY) * 0.15;
-  ring.style.left = ringX + 'px';
-  ring.style.top = ringY + 'px';
-  requestAnimationFrame(animateCursor);
+var tx=0,ty=0;
+document.addEventListener('touchstart',function(e){tx=e.changedTouches[0].screenX;ty=e.changedTouches[0].screenY},{passive:true});
+document.addEventListener('touchend',function(e){
+  var dx=e.changedTouches[0].screenX-tx;
+  var dy=e.changedTouches[0].screenY-ty;
+  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50){dx<0?go(cur+1):go(cur-1)}
+},{passive:true});
+
+function copyText(t,btn){
+  navigator.clipboard.writeText(t).then(function(){
+    var toast=document.getElementById('toast');
+    toast.textContent='Copied: "'+t+'"';
+    toast.classList.add('show');
+    setTimeout(function(){toast.classList.remove('show')},2000);
+    btn.textContent='✓';
+    setTimeout(function(){btn.textContent='📋'},1200);
+  });
 }
-animateCursor();
 
-document.querySelectorAll('a, button, .faq-question, input, textarea').forEach(el => {
-  el.addEventListener('mouseenter', () => ring.classList.add('hover'));
-  el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
-});
+go(0);
 
-/* ═══════════════════════════════════════
-   PARTICLE BACKGROUND
-   ═══════════════════════════════════════ */
-const canvas = document.getElementById('bgCanvas');
-const ctx = canvas.getContext('2d');
-let particles = [];
-let mouse = { x: -9999, y: -9999 };
-
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-document.addEventListener('mousemove', e => {
-  mouse.x = e.clientX;
-  mouse.y = e.clientY;
-});
-
-class Particle {
-  constructor() { this.reset(); }
-  reset() {
-    this.x = Math.random() * canvas.width;
-    this.y = Math.random() * canvas.height;
-    this.size = Math.random() * 2 + 0.5;
-    this.baseSpeedX = (Math.random() - 0.5) * 0.35;
-    this.baseSpeedY = (Math.random() - 0.5) * 0.35;
-    this.speedX = this.baseSpeedX;
-    this.speedY = this.baseSpeedY;
-    this.opacity = Math.random() * 0.5 + 0.1;
-    this.pulseSpeed = Math.random() * 0.02 + 0.005;
-    this.pulsePhase = Math.random() * Math.PI * 2;
+// Mesh Canvas
+(function(){
+  var c=document.getElementById('meshCanvas');if(!c)return;
+  var ctx=c.getContext('2d');
+  function resize(){c.width=c.offsetWidth;c.height=c.offsetHeight}
+  resize();window.addEventListener('resize',resize);
+  var nodes=[{x:.12,y:.3,type:'bus',label:'Bus #07'},{x:.38,y:.58,type:'relay',label:'Node 2'},{x:.6,y:.22,type:'relay',label:'Node 3'},{x:.65,y:.68,type:'relay',label:'Node 4'},{x:.88,y:.45,type:'station',label:'Station'}];
+  var edges=[[0,1],[0,2],[1,2],[1,3],[2,4],[3,4],[1,4]];
+  var pkt={e:0,p:0};
+  function draw(){
+    var W=c.width,H=c.height;ctx.clearRect(0,0,W,H);
+    for(var i=0;i<edges.length;i++){var a=nodes[edges[i][0]],b=nodes[edges[i][1]];ctx.beginPath();ctx.moveTo(a.x*W,a.y*H);ctx.lineTo(b.x*W,b.y*H);ctx.strokeStyle='rgba(37,99,235,.15)';ctx.lineWidth=1.5;ctx.stroke()}
+    pkt.p+=.006;if(pkt.p>=1){pkt.e=(pkt.e+1)%edges.length;pkt.p=0}
+    var pa=nodes[edges[pkt.e][0]],pb=nodes[edges[pkt.e][1]];
+    var px=(pa.x+(pb.x-pa.x)*pkt.p)*W,py=(pa.y+(pb.y-pa.y)*pkt.p)*H;
+    ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fillStyle='#22d3ee';ctx.shadowBlur=10;ctx.shadowColor='#22d3ee';ctx.fill();ctx.shadowBlur=0;
+    for(var j=0;j<nodes.length;j++){
+      var n=nodes[j],x=n.x*W,y=n.y*H,isS=n.type==='station',isB=n.type==='bus',r=isS?16:13;
+      if(isB){var pulse=.5+.5*Math.sin(Date.now()*.003);ctx.beginPath();ctx.arc(x,y,r+5+pulse*4,0,Math.PI*2);ctx.strokeStyle='rgba(37,99,235,'+(0.1+pulse*0.08)+')';ctx.lineWidth=1;ctx.stroke()}
+      ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=isS?'rgba(34,197,94,.12)':'rgba(37,99,235,.12)';ctx.fill();ctx.strokeStyle=isS?'#22c55e':'#3b82f6';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.font=(isS?'12':'10')+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(isB?'🚌':isS?'🏢':'📻',x,y);
+      ctx.font='8px sans-serif';ctx.fillStyle='#3d6494';ctx.fillText(n.label,x,y+r+9);
+    }
+    requestAnimationFrame(draw);
   }
-  update(time) {
-    this.x += this.speedX;
-    this.y += this.speedY;
-    const dx = this.x - mouse.x;
-    const dy = this.y - mouse.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 140 && dist > 0) {
-      const force = (140 - dist) / 140 * 0.6;
-      this.speedX += (dx / dist) * force * 0.3;
-      this.speedY += (dy / dist) * force * 0.3;
-    }
-    this.speedX += (this.baseSpeedX - this.speedX) * 0.02;
-    this.speedY += (this.baseSpeedY - this.speedY) * 0.02;
-    if (this.x < -10) this.x = canvas.width + 10;
-    if (this.x > canvas.width + 10) this.x = -10;
-    if (this.y < -10) this.y = canvas.height + 10;
-    if (this.y > canvas.height + 10) this.y = -10;
-    this.currentOpacity = this.opacity + Math.sin(time * this.pulseSpeed + this.pulsePhase) * 0.15;
-  }
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(0,180,255,${Math.max(0, this.currentOpacity)})`;
-    ctx.fill();
-  }
-}
+  draw();
+})();
 
-const particleCount = Math.min(100, Math.floor(window.innerWidth * window.innerHeight / 12000));
-for (let i = 0; i < particleCount; i++) particles.push(new Particle());
-
-function drawConnections() {
-  for (let i = 0; i < particles.length; i++) {
-    for (let j = i + 1; j < particles.length; j++) {
-      const dx = particles[i].x - particles[j].x;
-      const dy = particles[i].y - particles[j].y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 160) {
-        ctx.beginPath();
-        ctx.moveTo(particles[i].x, particles[i].y);
-        ctx.lineTo(particles[j].x, particles[j].y);
-        ctx.strokeStyle = `rgba(0,180,255,${0.07 * (1 - dist / 160)})`;
-        ctx.lineWidth = 0.6;
-        ctx.stroke();
-      }
-    }
-  }
-}
-
-function drawMouseConnections() {
-  particles.forEach(p => {
-    const dx = p.x - mouse.x;
-    const dy = p.y - mouse.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 200) {
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      ctx.lineTo(mouse.x, mouse.y);
-      ctx.strokeStyle = `rgba(0,180,255,${0.15 * (1 - dist / 200)})`;
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-    }
-  });
-}
-
-let time = 0;
-function animateParticles() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  time++;
-  particles.forEach(p => { p.update(time); p.draw(); });
-  drawConnections();
-  drawMouseConnections();
-  requestAnimationFrame(animateParticles);
-}
-animateParticles();
-
-/* ═══════════════════════════════════════
-   NAVBAR
-   ═══════════════════════════════════════ */
-const navbar = document.getElementById('navbar');
-const sections = document.querySelectorAll('section[id]');
-const navLinks = document.querySelectorAll('.nav-links a:not(.nav-cta)');
-
-window.addEventListener('scroll', () => {
-  navbar.classList.toggle('scrolled', window.scrollY > 60);
-  let current = '';
-  sections.forEach(sec => {
-    const top = sec.offsetTop - 200;
-    if (window.scrollY >= top) current = sec.getAttribute('id');
-  });
-  navLinks.forEach(link => {
-    link.classList.toggle('active', link.getAttribute('href') === '#' + current);
-  });
-});
-
-/* ═══════════════════════════════════════
-   MOBILE MENU
-   ═══════════════════════════════════════ */
-const menuToggle = document.getElementById('menuToggle');
-const mobileMenu = document.getElementById('mobileMenu');
-
-menuToggle.addEventListener('click', () => {
-  menuToggle.classList.toggle('active');
-  mobileMenu.classList.toggle('open');
-  document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
-});
-
-mobileMenu.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', () => {
-    menuToggle.classList.remove('active');
-    mobileMenu.classList.remove('open');
-    document.body.style.overflow = '';
-  });
-});
-
-/* ═══════════════════════════════════════
-   TYPING EFFECT
-   ═══════════════════════════════════════ */
-const typedEl = document.getElementById('typedText');
-const phrases = [
-  'مطور بوتات واتساب Multi-Device مفتوحة المصدر',
-  'صانع بوتات سونيك وكاكاشي وناروتو MD',
-  'مبرمج Full Stack Developer',
-  'مصمم أوامر عربية لبوتات واتساب',
-  'محب للأنمي والبرمجة'
-];
-let phraseIdx = 0;
-let charIdx = 0;
-let isDeleting = false;
-let typingSpeed = 80;
-
-function typeLoop() {
-  const current = phrases[phraseIdx];
-  if (isDeleting) {
-    typedEl.textContent = current.substring(0, charIdx - 1);
-    charIdx--;
-    typingSpeed = 40;
-  } else {
-    typedEl.textContent = current.substring(0, charIdx + 1);
-    charIdx++;
-    typingSpeed = 80;
-  }
-  if (!isDeleting && charIdx === current.length) {
-    isDeleting = true;
-    typingSpeed = 2000;
-  } else if (isDeleting && charIdx === 0) {
-    isDeleting = false;
-    phraseIdx = (phraseIdx + 1) % phrases.length;
-    typingSpeed = 500;
-  }
-  setTimeout(typeLoop, typingSpeed);
-}
-typeLoop();
-
-/* ═══════════════════════════════════════
-   SCROLL REVEAL
-   ═══════════════════════════════════════ */
-const revealElements = document.querySelectorAll('.reveal');
-const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach((entry) => {
-    if (entry.isIntersecting) {
-      const delay = entry.target.classList.contains('reveal-delay-1') ? 80 :
-                    entry.target.classList.contains('reveal-delay-2') ? 160 :
-                    entry.target.classList.contains('reveal-delay-3') ? 240 :
-                    entry.target.classList.contains('reveal-delay-4') ? 320 :
-                    entry.target.classList.contains('reveal-delay-5') ? 400 : 0;
-      setTimeout(() => entry.target.classList.add('visible'), delay);
-      revealObserver.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-revealElements.forEach(el => revealObserver.observe(el));
-
-/* ═══════════════════════════════════════
-   COUNTER ANIMATION
-   ═══════════════════════════════════════ */
-const counters = document.querySelectorAll('.stat-num');
-const counterObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const el = entry.target;
-      const target = parseInt(el.dataset.target);
-      const suffix = el.dataset.suffix || '+';
-      const duration = 2000;
-      const startTime = performance.now();
-      function updateCounter(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const current = Math.floor(eased * target);
-        el.textContent = current + (progress >= 1 ? suffix : '');
-        if (progress < 1) requestAnimationFrame(updateCounter);
-      }
-      requestAnimationFrame(updateCounter);
-      counterObserver.unobserve(el);
-    }
-  });
-}, { threshold: 0.5 });
-counters.forEach(el => counterObserver.observe(el));
-
-/* ═══════════════════════════════════════
-   SKILL BARS
-   ═══════════════════════════════════════ */
-const skillFills = document.querySelectorAll('.skill-fill');
-const skillObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const el = entry.target;
-      el.style.width = el.dataset.width + '%';
-      setTimeout(() => el.classList.add('animated'), 1600);
-      skillObserver.unobserve(el);
-    }
-  });
-}, { threshold: 0.3 });
-skillFills.forEach(el => skillObserver.observe(el));
-
-/* ═══════════════════════════════════════
-   FAQ ACCORDION
-   ═══════════════════════════════════════ */
-document.querySelectorAll('.faq-question').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const item = btn.parentElement;
-    const isOpen = item.classList.contains('open');
-    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-    if (!isOpen) item.classList.add('open');
-  });
-});
-
-/* ═══════════════════════════════════════
-   CONTACT FORM
-   ═══════════════════════════════════════ */
-const contactForm = document.getElementById('contactForm');
-const toast = document.getElementById('toast');
-const toastText = document.getElementById('toastText');
-
-function showToast(message, duration) {
-  duration = duration || 3000;
-  toastText.textContent = message;
-  toast.classList.add('show');
-  setTimeout(function() { toast.classList.remove('show'); }, duration);
-}
-
-contactForm.addEventListener('submit', function(e) {
-  e.preventDefault();
-  var inputs = contactForm.querySelectorAll('input, textarea');
-  var valid = true;
-  inputs.forEach(function(input) {
-    if (input.required && !input.value.trim()) {
-      valid = false;
-      input.style.borderColor = '#ff4444';
-      setTimeout(function() { input.style.borderColor = ''; }, 2000);
-    }
-  });
-  if (!valid) {
-    showToast('يرجى ملء جميع الحقول المطلوبة');
-    return;
-  }
-  var name = inputs[0].value.trim();
-  var phone = inputs[1].value.trim();
-  var subject = inputs[2].value.trim();
-  var details = inputs[3].value.trim();
-  var message = 'مرحبا SONIC، عندي طلب:\n\nالاسم: ' + name + '\nالرقم: ' + phone + '\nالموضوع: ' + (subject || 'لم يحدد') + '\nالتفاصيل: ' + details;
-  var waURL = 'https://wa.me/212698078610?text=' + encodeURIComponent(message);
-  window.open(waURL, '_blank');
-  showToast('جاري التحويل لواتساب...', 2500);
-  contactForm.reset();
-});
-
-/* ═══════════════════════════════════════
-   SMOOTH SCROLL
-   ═══════════════════════════════════════ */
-document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
-  anchor.addEventListener('click', function(e) {
-    e.preventDefault();
-    var target = document.querySelector(this.getAttribute('href'));
-    if (target) {
-      var offset = 80;
-      var top = target.getBoundingClientRect().top + window.scrollY - offset;
-      window.scrollTo({ top: top, behavior: 'smooth' });
-    }
-  });
-});
-
-/* ═══════════════════════════════════════
-   COMMANDS AUTO-SCROLL
-   ═══════════════════════════════════════ */
-var commandsBody = document.getElementById('commandsBody');
-if (commandsBody) {
-  var scrollDir = 1;
-  var scrollPaused = false;
-  commandsBody.addEventListener('mouseenter', function() { scrollPaused = true; });
-  commandsBody.addEventListener('mouseleave', function() { scrollPaused = false; });
-  function autoScroll() {
-    if (!scrollPaused) {
-      commandsBody.scrollTop += 0.5 * scrollDir;
-      if (commandsBody.scrollTop >= commandsBody.scrollHeight - commandsBody.clientHeight) {
-        scrollDir = -1;
-      } else if (commandsBody.scrollTop <= 0) {
-        scrollDir = 1;
-      }
-    }
-    requestAnimationFrame(autoScroll);
-  }
-  autoScroll();
-}
-
-/* ═══════════════════════════════════════
-   PARALLAX ON SCROLL
-   ═══════════════════════════════════════ */
-var orbs = document.querySelectorAll('.glow-orb');
-window.addEventListener('scroll', function() {
-  var scrollY = window.scrollY;
-  orbs.forEach(function(orb, i) {
-    var speed = (i + 1) * 0.03;
-    orb.style.transform = 'translateY(' + (scrollY * speed) + 'px)';
-  });
-}, { passive: true });
+// Live Demo Sim
+(function(){
+  var busEl=document.getElementById('mapBus');if(!busEl)return;
+  var path=[{t:35,l:28},{t:36,l:35},{t:37,l:42},{t:36,l:50},{t:35,l:58},{t:35,l:65},{t:36,l:71}];
+  var idx=0;
+  setInterval(function(){
+    idx=(idx+1)%path.length;
+    busEl.style.top=path[idx].t+'%';
+    busEl.style.left=path[idx].l+'%';
+    var progress=idx/(path.length-1);
+    var dist=Math.round(1500-progress*1200);
+    var spd=(35+Math.random()*10).toFixed(1);
+    var eta=Math.max(1,Math.round(dist/1000/(+spd/60)));
+    document.getElementById('dLat').textContent=(33.971590+progress*0.004).toFixed(6);
+    document.getElementById('dLon').textContent=(-6.849813+progress*0.008).toFixed(6);
+    document.getElementById('dSpd').textContent=spd+' km/h';
+    document.getElementById('dDist').textContent=dist+' m';
+    document.getElementById('dETA').textContent=eta+' min';
+    var rssi=-75-Math.round(progress*25)-Math.round(Math.random()*5);
+    var snr=(12-progress*5+(Math.random()*2-1)).toFixed(1);
+    document.getElementById('sigRSSI').textContent='RSSI: '+rssi+' dBm | SNR: '+snr+' dB';
+    var bars=document.querySelectorAll('#sigBars div');
+    var strength=Math.max(1,5-Math.round(progress*2));
+    for(var i=0;i<bars.length;i++){bars[i].style.background=i<strength?(i<3?'#22c55e':'var(--blue-xl)'):'#1e3a6e'}
+  },2500);
+})();
 </script>
 </body>
 </html>
