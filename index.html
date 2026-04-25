@@ -4,677 +4,523 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LoRa Track — Smart Bus Tracking System</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#03060f;--blue:#2563eb;--blue-l:#3b82f6;--blue-xl:#60a5fa;--cyan:#06b6d4;--cyan-l:#22d3ee;--white:#f0f6ff;--muted:#7aa0cc;--border:rgba(37,99,235,.18);--border2:rgba(37,99,235,.08);--glow:rgba(37,99,235,.35);--radius:14px;--font:'IBM Plex Sans Arabic',sans-serif;--mono:'Space Mono',monospace}
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font);background:var(--bg);color:var(--white);overflow:hidden;height:100vh;width:100vw}
-::selection{background:rgba(37,99,235,.4);color:#fff}
-.bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
-.bg-aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.au1{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.12) 0%,transparent 70%);top:-200px;right:-150px;animation:drift1 12s ease-in-out infinite}
-.au2{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.08) 0%,transparent 70%);bottom:-200px;left:-100px;animation:drift2 15s ease-in-out infinite}
-@keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-40px) scale(1.05)}}
-@keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,30px) scale(1.08)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes scaleIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
-@keyframes slideL{from{opacity:0;transform:translateX(-60px)}to{opacity:1;transform:translateX(0)}}
-@keyframes slideR{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-@keyframes busMove{0%{transform:translateX(-6px)}50%{transform:translateX(6px)}100%{transform:translateX(-6px)}}
-@keyframes signalSend{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
-@keyframes glow-pulse{0%,100%{box-shadow:0 0 20px rgba(37,99,235,.2)}50%{box-shadow:0 0 40px rgba(37,99,235,.4)}}
-.deck{position:relative;width:100%;height:100%}
-.slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .55s ease,visibility .55s ease;overflow:hidden;z-index:1}
-.slide.active{opacity:1;visibility:visible;z-index:2}
-.slide.active .a-up{animation:fadeUp .75s cubic-bezier(.16,1,.3,1) both}
-.slide.active .a-fade{animation:fadeIn .75s ease both}
-.slide.active .a-scale{animation:scaleIn .75s cubic-bezier(.16,1,.3,1) both}
-.slide.active .a-left{animation:slideL .75s cubic-bezier(.16,1,.3,1) both}
-.slide.active .a-right{animation:slideR .75s cubic-bezier(.16,1,.3,1) both}
-.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}.d4{animation-delay:.4s}.d5{animation-delay:.5s}.d6{animation-delay:.6s}.d7{animation-delay:.7s}.d8{animation-delay:.8s}.d9{animation-delay:.9s}.d10{animation-delay:1s}
-.card{background:rgba(6,12,26,.7);border:1px solid var(--border);border-radius:var(--radius);transition:all .4s;position:relative;overflow:hidden}
-.card::before{content:'';position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(37,99,235,.4),transparent);opacity:0;transition:opacity .4s}
-.card:hover{border-color:rgba(37,99,235,.4);transform:translateY(-3px);box-shadow:0 16px 48px rgba(0,0,0,.4)}.card:hover::before{opacity:1}
-.gt{background:linear-gradient(135deg,var(--blue-xl),var(--cyan-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);border-radius:999px;font-size:11px;font-weight:700;color:var(--blue-xl);text-transform:uppercase;letter-spacing:.08em}
-.tag-red{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2);color:#f87171}
-.tag-green{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2);color:#4ade80}
-.tag-amber{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.2);color:#fbbf24}
-.tag-purple{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.2);color:#c084fc}
-.dot-live{width:7px;height:7px;background:#22c55e;border-radius:50%;animation:blink 2s infinite}
-.formula-box{background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;font-family:var(--mono);font-size:12px;direction:ltr}
-.fl{color:var(--blue-xl);line-height:2}.fs{color:#1e3a6e;font-size:10px;margin:4px 0}.fr{color:#fff;font-weight:700}
-.code-block{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;direction:ltr}
-.cb-header{display:flex;align-items:center;gap:7px;padding:10px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06)}
-.cb-dot{width:11px;height:11px;border-radius:50%}.cb-dot.r{background:#ef4444}.cb-dot.y{background:#f59e0b}.cb-dot.g{background:#22c55e}
-.cb-filename{color:#3d6494;font-size:11px;font-family:var(--mono);margin-left:8px}
-pre{padding:16px;margin:0;font-size:11.5px;line-height:1.7;color:#8fb4d8;font-family:var(--mono);overflow-x:auto}
-.kw{color:#818cf8}.fn{color:#60a5fa}.num{color:#fb923c}.cm{color:#374971}
-.progress-wrap{position:fixed;top:0;left:0;right:0;z-index:100;height:3px;background:rgba(37,99,235,.08)}
-.progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan-l));transition:width .4s ease;width:0}
-.slide-counter{position:fixed;bottom:24px;right:28px;z-index:100;display:flex;align-items:center;gap:10px}
-.slide-counter span{font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.2)}
-.counter-bar{width:48px;height:2px;background:rgba(255,255,255,.06);border-radius:1px;position:relative;overflow:hidden}
-.counter-fill{position:absolute;left:0;top:0;height:100%;background:rgba(255,255,255,.3);transition:width .4s}
-.nav-btn{position:fixed;top:50%;z-index:100;width:44px;height:44px;border-radius:50%;background:rgba(6,12,26,.8);border:1px solid var(--border);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);transition:all .3s;opacity:0;pointer-events:none;font-size:20px}
-.nav-btn:hover{background:rgba(37,99,235,.15);border-color:rgba(37,99,235,.4);color:#fff}
-.nav-btn.vis{opacity:1;pointer-events:all}
-.nav-prev{left:16px;transform:translateY(-50%)}.nav-next{right:16px;transform:translateY(-50%)}
-.kb-hint{position:fixed;bottom:24px;left:28px;z-index:100;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.12);font-size:11px;transition:opacity .4s}
-.kbd{display:inline-flex;align-items:center;justify-content:center;padding:2px 8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:4px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);min-width:24px}
-.spec{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#4d7bad}
-.spec-dot{width:4px;height:4px;border-radius:50%;background:var(--blue-xl);flex-shrink:0}
-.icon-box{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ib-blue{background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.25)}
-.ib-green{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.2)}
-.ib-purple{background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.2)}
-.hw-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(0,0,0,.2);border-radius:12px}
-.step-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(37,99,235,.2);border:1px solid rgba(37,99,235,.3);color:var(--blue-xl);font-weight:700;font-size:11px;flex-shrink:0}
-.glow-icon{width:60px;height:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px}
-.glow-icon.blue{background:linear-gradient(135deg,var(--blue),var(--cyan));box-shadow:0 0 30px var(--glow)}
-.glow-icon.green{background:linear-gradient(135deg,#22c55e,#14b8a6);box-shadow:0 0 30px rgba(34,197,94,.3)}
-.stat-card{padding:20px 16px;text-align:center;background:rgba(6,12,26,.7);border:1px solid var(--border);border-radius:var(--radius)}
-.stat-num{font-family:var(--mono);font-size:clamp(1.4rem,2.5vw,2rem);font-weight:400;background:linear-gradient(135deg,#fff,var(--blue-xl));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
-.stat-unit{color:var(--cyan-l);font-size:10px;font-weight:600;margin-top:3px}
-.stat-label{color:#3d6494;font-size:11px;margin-top:4px}
-.ack-step{display:flex;align-items:center;gap:10px;padding:12px 18px;background:rgba(0,0,0,.25);border-radius:12px;border:1px solid var(--border2)}
-.ack-label{font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:7px}
-.cmp-table{width:100%;border-collapse:separate;border-spacing:0;font-size:11.5px}
-.cmp-table thead th{padding:10px 14px;background:rgba(37,99,235,.1);color:var(--blue-xl);font-weight:700;text-align:left;border-bottom:1px solid rgba(37,99,235,.2);font-size:10.5px}
-.cmp-table thead th:first-child{color:var(--white)}
-.cmp-table tbody td{padding:10px 14px;background:rgba(6,12,26,.5);color:#7aa0cc;border-bottom:1px solid rgba(37,99,235,.06)}
-.cmp-table tbody tr:last-child td{border-bottom:none}
-.cmp-table td.feat{color:var(--white);font-weight:600}
-.yes{color:#22c55e}.no{color:#ef4444}.amber{color:var(--blue-xl);font-weight:600}
-.mini-map{position:relative;width:100%;aspect-ratio:16/9;background:rgba(3,6,15,.9);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
-.mini-map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(37,99,235,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.06) 1px,transparent 1px);background-size:24px 24px}
-.mini-road{position:absolute;background:rgba(255,255,255,.06);border-radius:1px}
-.mini-station{position:absolute;width:12px;height:12px;border-radius:50%;background:#22c55e;border:2px solid var(--bg);box-shadow:0 0 8px rgba(34,197,94,.5);z-index:4}
-.mini-bus{position:absolute;font-size:18px;z-index:5;transition:all 2.5s cubic-bezier(.45,0,.55,1);filter:drop-shadow(0 0 6px rgba(37,99,235,.7))}
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-10px);background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#4ade80;padding:10px 22px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:all .4s;z-index:999;backdrop-filter:blur(12px)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+:root {
+  --bg: #050a14;
+  --surface: rgba(14, 22, 40, 0.6);
+  --border: rgba(59, 130, 246, 0.15);
+  --border-hover: rgba(59, 130, 246, 0.4);
+  --blue: #2563eb;
+  --blue-l: #3b82f6;
+  --blue-xl: #60a5fa;
+  --cyan: #06b6d4;
+  --cyan-l: #22d3ee;
+  --green: #10b981;
+  --green-l: #34d399;
+  --red: #ef4444;
+  --red-l: #f87171;
+  --amber: #f59e0b;
+  --amber-l: #fbbf24;
+  --purple: #8b5cf6;
+  --purple-l: #a78bfa;
+  --white: #f8fafc;
+  --muted: #94a3b8;
+  --font: 'Inter', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font); background: var(--bg); color: var(--white); overflow: hidden; height: 100vh; width: 100vw; -webkit-font-smoothing: antialiased; }
+
+/* Background Effects */
+.bg-effects { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.bg-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(59,130,246,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,.03) 1px, transparent 1px); background-size: 60px 60px; }
+.bg-orb-1 { position: absolute; width: 800px; height: 800px; border-radius: 50%; background: radial-gradient(circle, rgba(37,99,235,.1) 0%, transparent 70%); top: -300px; right: -200px; animation: drift 20s ease-in-out infinite; }
+.bg-orb-2 { position: absolute; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(6,182,212,.08) 0%, transparent 70%); bottom: -200px; left: -100px; animation: drift 25s ease-in-out infinite reverse; }
+@keyframes drift { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,-40px) scale(1.05)} }
+
+/* Animations */
+@keyframes fadeUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes scaleIn { from{opacity:0;transform:scale(.9)} to{opacity:1;transform:scale(1)} }
+@keyframes slideL { from{opacity:0;transform:translateX(-50px)} to{opacity:1;transform:translateX(0)} }
+@keyframes slideR { from{opacity:0;transform:translateX(50px)} to{opacity:1;transform:translateX(0)} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(37,99,235,0.4)} 70%{box-shadow:0 0 0 15px rgba(37,99,235,0)} 100%{box-shadow:0 0 0 0 rgba(37,99,235,0)} }
+@keyframes glow { 0%,100%{border-color:rgba(59,130,246,0.3); box-shadow:0 0 15px rgba(59,130,246,0.1)} 50%{border-color:rgba(59,130,246,0.6); box-shadow:0 0 25px rgba(59,130,246,0.2)} }
+
+/* Slide System */
+.deck { position: relative; width: 100%; height: 100%; }
+.slide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility .6s ease; overflow-y: auto; overflow-x: hidden; z-index: 1; padding: 40px 0; }
+.slide.active { opacity: 1; visibility: visible; z-index: 2; }
+.slide.active .anim-up { animation: fadeUp .8s cubic-bezier(.16,1,.3,1) both; }
+.slide.active .anim-fade { animation: fadeIn .8s ease both; }
+.slide.active .anim-scale { animation: scaleIn .8s cubic-bezier(.16,1,.3,1) both; }
+.slide.active .anim-left { animation: slideL .8s cubic-bezier(.16,1,.3,1) both; }
+.slide.active .anim-right { animation: slideR .8s cubic-bezier(.16,1,.3,1) both; }
+.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}.d4{animation-delay:.4s}.d5{animation-delay:.5s}.d6{animation-delay:.6s}.d7{animation-delay:.7s}.d8{animation-delay:.8s}
+
+/* UI Components */
+.glass { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; backdrop-filter: blur(20px); transition: all .4s; position: relative; overflow: hidden; }
+.glass::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent); }
+.glass:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,.3); }
+
+.tag { display:inline-flex; align-items:center; gap:6px; padding:6px 16px; background:rgba(37,99,235,.1); border:1px solid rgba(37,99,235,.2); border-radius:999px; font-size:11px; font-weight:700; color:var(--blue-xl); text-transform:uppercase; letter-spacing:.08em; }
+.tag-red { background:rgba(239,68,68,.1); border-color:rgba(239,68,68,.2); color:var(--red-l) }
+.tag-green { background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.2); color:var(--green-l) }
+.tag-amber { background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.2); color:var(--amber-l) }
+.tag-purple { background:rgba(139,92,246,.1); border-color:rgba(139,92,246,.2); color:var(--purple-l) }
+.dot-live { width:8px; height:8px; background:var(--green); border-radius:50%; animation: blink 2s infinite; box-shadow: 0 0 8px var(--green); }
+
+.heading-xl { font-size:clamp(2.5rem, 6vw, 5rem); font-weight:800; line-height:.95; letter-spacing:-2px; }
+.heading-lg { font-size:clamp(2rem, 4vw, 3.5rem); font-weight:800; line-height:1; letter-spacing:-1px; }
+.heading-md { font-size:clamp(1.5rem, 2.5vw, 2rem); font-weight:700; line-height:1.1; }
+.text-gradient { background:linear-gradient(135deg, var(--white) 0%, var(--blue-xl) 50%, var(--cyan-l) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+.stat-box { padding:24px; text-align:center; background:rgba(0,0,0,.2); border-radius:16px; border:1px solid var(--border); }
+.stat-num { font-family:var(--mono); font-size:clamp(1.8rem, 3vw, 2.5rem); font-weight:700; background:linear-gradient(135deg,#fff,var(--blue-xl)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; line-height:1; }
+.stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-top:8px; }
+
+.icon-box { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.ib-blue { background:rgba(37,99,235,.15); border:1px solid rgba(37,99,235,.25); }
+.ib-green { background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.25); }
+.ib-purple { background:rgba(139,92,246,.15); border:1px solid rgba(139,92,246,.25); }
+.ib-amber { background:rgba(245,158,11,.15); border:1px solid rgba(245,158,11,.25); }
+
+/* Navigation & UI */
+.progress-wrap { position:fixed; top:0; left:0; right:0; z-index:100; height:4px; background:rgba(255,255,255,.03); }
+.progress-bar { height:100%; background:linear-gradient(90deg,var(--blue),var(--cyan-l)); transition:width .5s ease; width:0; }
+.nav-btn { position:fixed; top:50%; z-index:100; width:52px; height:52px; border-radius:16px; background:rgba(14,22,40,.8); border:1px solid var(--border); backdrop-filter:blur(12px); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); transition:all .3s; opacity:0; pointer-events:none; font-size:24px; }
+.nav-btn:hover { background:rgba(37,99,235,.2); border-color:var(--blue); color:#fff; transform:translateY(-50%) scale(1.05); }
+.nav-btn.vis { opacity:1; pointer-events:all; }
+.nav-prev { left:20px; transform:translateY(-50%); }
+.nav-next { right:20px; transform:translateY(-50%); }
+.slide-counter { position:fixed; bottom:28px; right:32px; z-index:100; display:flex; align-items:center; gap:12px; font-family:var(--mono); font-size:12px; color:rgba(255,255,255,.2); }
+.counter-line { width:40px; height:2px; background:rgba(255,255,255,.06); border-radius:1px; overflow:hidden; }
+.counter-fill { height:100%; background:rgba(255,255,255,.3); transition:width .5s; }
+.kb-hint { position:fixed; bottom:28px; left:32px; z-index:100; display:flex; align-items:center; gap:8px; color:rgba(255,255,255,.15); font-size:11px; transition:opacity .4s; }
+.kbd { padding:3px 8px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:6px; font-family:var(--mono); font-size:10px; }
+
+.code-block { background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.05); border-radius:14px; overflow:hidden; font-family:var(--mono); font-size:11px; text-align:left; }
+.cb-head { display:flex; align-items:center; gap:6px; padding:10px 16px; background:rgba(255,255,255,.02); border-bottom:1px solid rgba(255,255,255,.05); }
+.cb-dot { width:10px; height:10px; border-radius:50%; }
+.cb-r { background:#ef4444; } .cb-y { background:#f59e0b; } .cb-g { background:#10b981; }
+.cb-name { color:var(--muted); font-size:10px; margin-left:8px; }
+pre { padding:16px; margin:0; line-height:1.6; color:#8fb4d8; overflow-x:auto; }
+.kw{color:#818cf8}.fn{color:#60a5fa}.num{color:#fb923c}.cm{color:#374971}.str{color:#34d399}
+
+.timeline-step { display:flex; gap:20px; margin-bottom:24px; }
+.tl-num { width:36px; height:36px; border-radius:10px; background:rgba(37,99,235,.15); border:1px solid rgba(37,99,235,.3); color:var(--blue-xl); font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:14px; }
 </style>
 </head>
 <body>
-<div class="bg-grid"></div>
-<div class="bg-aurora"><div class="au1"></div><div class="au2"></div></div>
-<div class="toast" id="toast"></div>
+
+<div class="bg-effects">
+  <div class="bg-grid"></div>
+  <div class="bg-orb-1"></div>
+  <div class="bg-orb-2"></div>
+</div>
+
 <div class="progress-wrap"><div class="progress-bar" id="pbar"></div></div>
 <button class="nav-btn nav-prev" id="prevBtn" onclick="go(cur-1)">‹</button>
 <button class="nav-btn nav-next vis" id="nextBtn" onclick="go(cur+1)">›</button>
-<div class="slide-counter"><span id="sNum">01</span><div class="counter-bar"><div class="counter-fill" id="cFill"></div></div><span id="sTotal">20</span></div>
-<div class="kb-hint" id="kbHint"><span class="kbd">←</span><span class="kbd">→</span> or <span class="kbd">Space</span></div>
+
+<div class="slide-counter">
+  <span id="sNum">01</span>
+  <div class="counter-line"><div class="counter-fill" id="cFill"></div></div>
+  <span id="sTotal">14</span>
+</div>
+
+<div class="kb-hint" id="kbHint">
+  <span class="kbd">←</span><span class="kbd">→</span> or <span class="kbd">Space</span>
+</div>
 
 <div class="deck" id="deck">
 
-<!-- S1: TITLE -->
+<!-- S1: TITLE & TEAM -->
 <div class="slide active" data-s="1">
-<div style="max-width:900px;padding:0 40px;text-align:center">
-<div class="a-up"><span class="tag"><span class="dot-live"></span> IoT Project — Safari Institute</span></div>
-<h1 class="a-up d1" style="font-size:clamp(2.8rem,8vw,6.5rem);font-weight:700;line-height:.92;letter-spacing:-2px;margin:28px 0 8px;background:linear-gradient(135deg,#fff 0%,#93c5fd 40%,var(--cyan-l) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Smart Bus<br>Tracking System</h1>
-<p class="a-up d2" style="font-size:clamp(1rem,2.2vw,1.2rem);color:var(--muted);line-height:1.6">Using <strong style="color:var(--blue-xl)">LoRa</strong> and <strong style="color:var(--cyan-l)">GPS</strong> Technologies</p>
-<p class="a-up d3" style="font-size:13px;color:#3d6494;max-width:500px;margin:8px auto 28px;line-height:1.65">An integrated bus tracking system providing accurate, real-time information about bus location, speed, and ETA — without cellular networks.</p>
-<div class="a-up d4" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-bottom:24px">
-<div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.25);border-radius:999px;font-size:14px;font-weight:600">👥 Team SAFARIMAKERS</div>
-<div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:999px;font-size:13px;color:var(--muted)">🎓 Supervised by <strong style="color:var(--white)">Mohamed Abdelake</strong></div>
-</div>
-<div class="a-fade d5" style="display:flex;justify-content:center;gap:12px;margin-bottom:10px">
-<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid rgba(255,255,255,.12)">OA</div>
-<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid rgba(255,255,255,.12)">RG</div>
-<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#10b981,#14b8a6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid rgba(255,255,255,.12)">IF</div>
-</div>
-<div class="a-fade d6" style="font-size:12px;color:rgba(255,255,255,.22)">Oussama El Assiri · Rayan El Ghazali · Imran El Fachtioui</div>
-<div class="a-fade d10" style="margin-top:40px;font-size:11px;color:rgba(255,255,255,.1)">Press → or Space to navigate</div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;text-align:center">
+    <div class="anim-up"><span class="tag"><span class="dot-live"></span> IoT Project</span></div>
+    <h1 class="anim-up d1 heading-xl" style="margin-top:32px">Smart Bus Tracking<br><span class="text-gradient">System</span></h1>
+    <p class="anim-up d2" style="font-size:18px;color:var(--muted);max-width:650px;margin:20px auto 0;line-height:1.6">Using <strong style="color:var(--white)">LoRa</strong> and <strong style="color:var(--white)">GPS</strong></p>
+    <div class="anim-up d3" style="margin-top:40px;display:flex;flex-wrap:wrap;justify-content:center;gap:16px">
+      <div class="glass" style="padding:20px 28px;display:flex;align-items:center;gap:14px">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">OA</div>
+        <div style="text-align:left"><p style="font-weight:700;font-size:14px">Oussama El Assiri</p><p style="font-size:11px;color:var(--muted)">Team SAFARIMAKERS</p></div>
+      </div>
+      <div class="glass" style="padding:20px 28px;display:flex;align-items:center;gap:14px">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">RG</div>
+        <div style="text-align:left"><p style="font-weight:700;font-size:14px">Rayan El Ghazali</p><p style="font-size:11px;color:var(--muted)">Team SAFARIMAKERS</p></div>
+      </div>
+      <div class="glass" style="padding:20px 28px;display:flex;align-items:center;gap:14px">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#10b981,#14b8a6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">IF</div>
+        <div style="text-align:left"><p style="font-weight:700;font-size:14px">Imran El Fachtioui</p><p style="font-size:11px;color:var(--muted)">Team SAFARIMAKERS</p></div>
+      </div>
+    </div>
+    <p class="anim-up d5" style="font-size:13px;color:var(--muted);margin-top:24px">Supervised by: <strong style="color:var(--white)">Mohamed Abdelake</strong></p>
+  </div>
 </div>
 
-<!-- S2: PROBLEM -->
+<!-- S2: THE PROBLEM -->
 <div class="slide" data-s="2">
-<div style="max-width:940px;padding:0 40px;width:100%">
-<div style="text-align:center;margin-bottom:36px">
-<span class="a-up tag tag-red">⚠ The Problem</span>
-<h2 class="a-up d1" style="font-size:clamp(2rem,5.5vw,4rem);font-weight:700;line-height:1.05;margin-top:16px">Have you ever experienced<br>this feeling<span style="color:#f87171">…</span></h2>
-<p class="a-up d2" style="font-size:16px;color:var(--muted);margin-top:10px">Waiting for the bus with <strong style="color:#f87171">no information</strong> at all?</p>
-</div>
-<div class="a-up d3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-<div class="card" style="padding:28px;text-align:center"><div style="width:64px;height:64px;border-radius:18px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;animation:glow-pulse 3s ease-in-out infinite">🕐</div><p style="font-weight:700;font-size:16px;margin-bottom:8px">When Will It Arrive?</p><p style="font-size:12px;color:#3d6494;line-height:1.6">No estimated time of arrival. Passengers left completely in the dark.</p></div>
-<div class="card" style="padding:28px;text-align:center"><div style="width:64px;height:64px;border-radius:18px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;animation:glow-pulse 3s ease-in-out infinite .5s">❓</div><p style="font-weight:700;font-size:16px;margin-bottom:8px">Did It Already Pass?</p><p style="font-size:12px;color:#3d6494;line-height:1.6">No way to know if you missed it or if it hasn't left yet.</p></div>
-<div class="card" style="padding:28px;text-align:center"><div style="width:64px;height:64px;border-radius:18px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;animation:glow-pulse 3s ease-in-out infinite 1s">📵</div><p style="font-weight:700;font-size:16px;margin-bottom:8px">No Network Coverage</p><p style="font-size:12px;color:#3d6494;line-height:1.6">4G is costly, limited in rural areas, requires monthly subscriptions.</p></div>
-</div>
-<div class="a-fade d6" style="text-align:center;margin-top:20px;padding:10px 22px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.12);border-radius:12px;display:inline-block"><p style="font-size:12px;color:#f87171">This daily frustration affects millions of commuters — especially in developing regions</p></div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;width:100%">
+    <div style="text-align:center;margin-bottom:48px">
+      <span class="anim-up tag tag-red">⚠ The Problem</span>
+      <h2 class="anim-up d1 heading-lg" style="margin-top:20px">Have you ever experienced<br>this feeling<span style="color:var(--red-l)">…</span>?</h2>
+      <p class="anim-up d2" style="font-size:16px;color:var(--muted);margin-top:12px">Waiting for the bus with no information?</p>
+    </div>
+    <div class="anim-up d3" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:800px;margin:0 auto">
+      <div class="glass" style="padding:36px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">🕐</div>
+        <h3 style="font-size:20px;font-weight:700;margin-bottom:10px">When will the bus arrive?</h3>
+        <p style="font-size:14px;color:var(--muted);line-height:1.6">Passengers are left completely in the dark, not knowing how long they must wait.</p>
+      </div>
+      <div class="glass" style="padding:36px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">❓</div>
+        <h3 style="font-size:20px;font-weight:700;margin-bottom:10px">Did the bus already pass?</h3>
+        <p style="font-size:14px;color:var(--muted);line-height:1.6">Without tracking, you never know if you missed it or if it just hasn't left yet.</p>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- S3: MOTIVATION -->
+<!-- S3: MOTIVATION & INTRO -->
 <div class="slide" data-s="3">
-<div style="max-width:880px;padding:0 40px;text-align:center">
-<div class="a-scale"><div class="glow-icon blue" style="margin:0 auto 28px;animation:float 6s ease-in-out infinite">💡</div></div>
-<h2 class="a-up d2" style="font-size:clamp(2.2rem,6vw,4.5rem);font-weight:700;line-height:1;margin-bottom:12px">This sparked our <span class="gt">motivation</span></h2>
-<p class="a-up d3" style="font-size:14px;color:var(--muted);max-width:560px;margin:0 auto 32px;line-height:1.75">We decided to build a solution that doesn't depend on expensive cellular networks — something that works everywhere, is affordable, and provides real-time data.</p>
-<div class="a-scale d5" style="display:inline-block"><div style="padding:22px 60px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.25);border-radius:24px;backdrop-filter:blur(8px)"><p style="font-size:clamp(2.2rem,5vw,3.8rem);font-weight:700;letter-spacing:-1px;background:linear-gradient(135deg,#fff,#93c5fd,var(--cyan-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent">LoRa Track</p><p style="font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.15em">Integrated Bus Tracking System</p></div></div>
-<div class="a-up d7" style="margin-top:24px;display:flex;flex-wrap:wrap;justify-content:center;gap:14px">
-<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:7px;height:7px;border-radius:50%;background:#22c55e"></span>Real-time tracking</div>
-<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:7px;height:7px;border-radius:50%;background:var(--blue-xl)"></span>No internet needed</div>
-<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:7px;height:7px;border-radius:50%;background:var(--cyan-l)"></span>Cost-effective</div>
-<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:7px;height:7px;border-radius:50%;background:#fbbf24"></span>TFT + Web display</div>
-</div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;text-align:center">
+    <div class="anim-scale"><div style="width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 32px;box-shadow:0 0 40px rgba(37,99,235,.3);animation:float 6s ease-in-out infinite">💡</div></div>
+    <h2 class="anim-up d2 heading-xl">LoRa <span class="text-gradient">Track</span></h2>
+    <p class="anim-up d3" style="font-size:16px;color:var(--muted);max-width:700px;margin:20px auto 0;line-height:1.7">This problem sparked our motivation. <strong style="color:var(--white)">LoRa Track</strong> is an integrated bus tracking system using LoRa technology. It allows us to obtain accurate, real-time information about the bus.</p>
+    <div class="anim-up d4" style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin-top:36px">
+      <div class="glass" style="padding:20px 28px;display:flex;align-items:center;gap:12px"><div class="icon-box ib-blue" style="width:40px;height:40px;font-size:18px">🚌</div><div style="text-align:left"><p style="font-weight:700;font-size:13px">Mobile Device</p><p style="font-size:11px;color:var(--muted)">Installed on the bus</p></div></div>
+      <div class="glass" style="padding:20px 28px;display:flex;align-items:center;gap:12px"><div class="icon-box ib-green" style="width:40px;height:40px;font-size:18px">🏢</div><div style="text-align:left"><p style="font-weight:700;font-size:13px">Stationary Device</p><p style="font-size:11px;color:var(--muted)">Located at the station</p></div></div>
+    </div>
+    <div class="anim-up d5" style="margin-top:20px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:999px;font-size:12px;font-weight:600;color:var(--blue-xl)">🖥️ TFT Screen Display</div>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:999px;font-size:12px;font-weight:600;color:var(--green-l)">🌐 Web Page Details</div>
+    </div>
+  </div>
 </div>
 
-<!-- S4: SYSTEM OVERVIEW -->
+<!-- S4: CHALLENGES -->
 <div class="slide" data-s="4">
-<div style="max-width:1060px;padding:0 40px;width:100%">
-<div style="text-align:center;margin-bottom:32px">
-<span class="a-up tag">📋 System Architecture</span>
-<h2 class="a-up d1" style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.1;margin-top:12px">Two Devices, <span class="gt">One System</span></h2>
-<p class="a-up d2" style="font-size:13px;color:var(--muted);margin-top:4px">A mobile device on the bus and a stationary device at the station</p>
-</div>
-<div class="a-up d3" style="display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap">
-<div class="card" style="padding:26px;width:250px">
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px"><div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px var(--glow)">🚌</div><div><p style="font-weight:700;font-size:16px">Bus Node</p><p style="font-size:10px;color:#3d6494">Mobile Device</p></div></div>
-<div style="display:flex;flex-direction:column;gap:8px">
-<div class="hw-item"><div class="icon-box ib-blue" style="width:34px;height:34px;font-size:15px">💻</div><div><p style="font-weight:700;font-size:12px">ESP32</p><p style="font-size:10px;color:#3d6494">Main microcontroller</p></div></div>
-<div class="hw-item"><div class="icon-box ib-blue" style="width:34px;height:34px;font-size:15px">📻</div><div><p style="font-weight:700;font-size:12px">LoRa RA-01</p><p style="font-size:10px;color:#3d6494">SX1278 radio</p></div></div>
-<div class="hw-item"><div class="icon-box ib-blue" style="width:34px;height:34px;font-size:15px">🛰️</div><div><p style="font-weight:700;font-size:12px">GPS Module</p><p style="font-size:10px;color:#3d6494">Satellite positioning</p></div></div>
-<div class="hw-item"><div class="icon-box ib-blue" style="width:34px;height:34px;font-size:15px">⏻</div><div><p style="font-weight:700;font-size:12px">ON/OFF Switch</p><p style="font-size:10px;color:#3d6494">Power control</p></div></div>
-</div></div>
-<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0">
-<div style="width:100px;height:2px;background:linear-gradient(90deg,var(--blue),var(--cyan-l));position:relative"><div style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:8px;height:8px;background:var(--blue-xl);border-radius:50%;animation:busMove 2s ease-in-out infinite;box-shadow:0 0 8px var(--blue-xl)"></div></div>
-<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--blue-xl)">LoRa TX</span>
-<div style="font-size:12px;color:rgba(255,255,255,.08)">↓</div>
-<div style="width:100px;height:2px;background:linear-gradient(90deg,#22c55e,var(--cyan-l));position:relative"><div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:6px;height:6px;background:#22c55e;border-radius:50%;animation:signalSend 1.5s infinite"></div></div>
-<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#4ade80">ACK RX</span>
-</div>
-<div class="card" style="padding:26px;width:250px">
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px"><div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#14b8a6);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px rgba(34,197,94,.3)">🏢</div><div><p style="font-weight:700;font-size:16px">Bus Station</p><p style="font-size:10px;color:#3d6494">Stationary Device</p></div></div>
-<div style="display:flex;flex-direction:column;gap:8px">
-<div class="hw-item"><div class="icon-box ib-green" style="width:34px;height:34px;font-size:15px">🖥️</div><div><p style="font-weight:700;font-size:12px">LCD CYD ESP32</p><p style="font-size:10px;color:#3d6494">Color TFT + MCU</p></div></div>
-<div class="hw-item"><div class="icon-box ib-green" style="width:34px;height:34px;font-size:15px">📻</div><div><p style="font-weight:700;font-size:12px">LoRa Module</p><p style="font-size:10px;color:#3d6494">Receives data</p></div></div>
-<div class="hw-item"><div class="icon-box ib-green" style="width:34px;height:34px;font-size:15px">🔋</div><div><p style="font-weight:700;font-size:12px">Lithium Battery</p><p style="font-size:10px;color:#3d6494">Portable power</p></div></div>
-<div class="hw-item"><div class="icon-box ib-green" style="width:34px;height:34px;font-size:15px">⏻</div><div><p style="font-weight:700;font-size:12px">ON/OFF Switch</p><p style="font-size:10px;color:#3d6494">Power management</p></div></div>
-</div></div>
-</div>
-<div class="a-up d6" style="text-align:center;margin-top:18px"><div style="display:inline-flex;align-items:center;gap:8px;padding:8px 20px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:999px;font-size:12px;color:var(--muted)">🌐 Data displayed on <strong style="color:var(--white)">TFT screen</strong> AND <strong style="color:var(--white)">web page</strong></div></div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;width:100%">
+    <div style="text-align:center;margin-bottom:40px">
+      <span class="anim-up tag tag-red">🛡️ Challenges</span>
+      <h2 class="anim-up d1 heading-lg" style="margin-top:20px">Challenges We <span style="color:var(--red-l)">Faced</span></h2>
+    </div>
+    <div class="anim-up d2" style="display:flex;flex-direction:column;gap:12px;max-width:800px;margin:0 auto">
+      <div class="glass" style="padding:18px 24px;display:flex;align-items:center;gap:20px"><div class="icon-box ib-blue" style="width:40px;height:40px;font-size:18px">📶</div><div><p style="font-weight:700;font-size:14px">Limited and Costly Networks</p><p style="font-size:12px;color:var(--muted)">Communication networks like 4G are expensive and limited.</p></div></div>
+      <div class="glass" style="padding:18px 24px;display:flex;align-items:center;gap:20px"><div class="icon-box ib-amber" style="width:40px;height:40px;font-size:18px">📏</div><div><p style="font-weight:700;font-size:14px">Distance Issues</p><p style="font-size:12px;color:var(--muted)">Distance issues between the two LoRa devices (bus and station).</p></div></div>
+      <div class="glass" style="padding:18px 24px;display:flex;align-items:center;gap:20px"><div class="icon-box ib-purple" style="width:40px;height:40px;font-size:18px">🔀</div><div><p style="font-weight:700;font-size:14px">Bus Signal Interference</p><p style="font-size:12px;color:var(--muted)">Multiple buses transmitting at the same time causes confusion.</p></div></div>
+      <div class="glass" style="padding:18px 24px;display:flex;align-items:center;gap:20px"><div class="icon-box ib-green" style="width:40px;height:40px;font-size:18px">❌</div><div><p style="font-weight:700;font-size:14px">Device Not Receiving Message</p><p style="font-size:12px;color:var(--muted)">Issue with the device failing to receive the transmitted message.</p></div></div>
+      <div class="glass" style="padding:18px 24px;display:flex;align-items:center;gap:20px"><div class="icon-box ib-blue" style="width:40px;height:40px;font-size:18px">📐</div><div><p style="font-weight:700;font-size:14px">Calculating Actual Distance</p><p style="font-size:12px;color:var(--muted)">Problem in calculating the actual distance on the map.</p></div></div>
+    </div>
+  </div>
 </div>
 
-<!-- S5: CHALLENGES -->
+<!-- S5: SOL 1 - LORA -->
 <div class="slide" data-s="5">
-<div style="max-width:980px;padding:0 40px;width:100%">
-<div style="text-align:center;margin-bottom:32px">
-<span class="a-up tag tag-red">🛡 Challenges We Faced</span>
-<h2 class="a-up d1" style="font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1;margin-top:12px">Five Major <span style="color:#f87171">Obstacles</span></h2>
-</div>
-<div class="a-up d2" style="display:flex;flex-direction:column;gap:10px;max-width:800px;margin:0 auto">
-<div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:10px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📵</div><div style="flex:1"><p style="font-weight:700;font-size:13px;margin-bottom:2px">Limited and Costly Communication Networks</p><p style="font-size:11px;color:#3d6494">4G is expensive, requires monthly subscriptions, unreliable in rural areas</p></div></div>
-<div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:10px;background:rgba(251,191,36,.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📏</div><div style="flex:1"><p style="font-weight:700;font-size:13px;margin-bottom:2px">Distance Issues Between LoRa Devices</p><p style="font-size:11px;color:#3d6494">Signal degradation over long distances between bus and station</p></div></div>
-<div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:10px;background:rgba(250,204,21,.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🔀</div><div style="flex:1"><p style="font-weight:700;font-size:13px;margin-bottom:2px">Bus Signal Interference</p><p style="font-size:11px;color:#3d6494">Multiple buses transmitting simultaneously causing confusion</p></div></div>
-<div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:10px;background:rgba(236,72,153,.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">❌</div><div style="flex:1"><p style="font-weight:700;font-size:13px;margin-bottom:2px">Device Not Receiving the Message</p><p style="font-size:11px;color:#3d6494">Message loss due to interference or environmental obstacles</p></div></div>
-<div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px"><div style="width:34px;height:34px;border-radius:10px;background:rgba(6,182,212,.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📐</div><div style="flex:1"><p style="font-weight:700;font-size:13px;margin-bottom:2px">Calculating Actual Distance on the Map</p><p style="font-size:11px;color:#3d6494">GPS coordinates don't translate to road distance</p></div></div>
-</div>
-<p class="a-fade d5" style="text-align:center;margin-top:16px;font-size:12px;color:rgba(255,255,255,.15)">Each challenge required a unique, engineered solution →</p>
-</div>
+  <div style="max-width:1000px;padding:0 40px;width:100%">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center">
+      <div>
+        <span class="anim-right tag tag-green">✓ Solution 1</span>
+        <h2 class="anim-right d1 heading-md" style="margin-top:16px">Limited Network: <span style="color:var(--green-l)">LoRa</span></h2>
+        <p class="anim-right d3" style="color:var(--muted);font-size:14px;line-height:1.8;margin-top:14px">Using <strong style="color:var(--white)">LoRa technology</strong>, which enables long-range communication with very low power consumption and requires no monthly subscription to cellular networks, making it a cost-effective and efficient choice for data exchange in Internet of Things (IoT) projects.</p>
+      </div>
+      <div class="anim-scale d2"><div class="glass" style="padding:32px;text-align:center;animation:glow 4s infinite">
+        <div style="font-size:48px;margin-bottom:16px">📡</div>
+        <h3 style="font-size:22px;font-weight:700" class="text-gradient">LoRa Tech</h3>
+        <p style="font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.1em">Long Range Communication</p>
+        <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:left">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)"><span style="color:var(--green-l)">✓</span> Very Low Power</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)"><span style="color:var(--green-l)">✓</span> No Monthly Fee</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)"><span style="color:var(--green-l)">✓</span> Long Range</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)"><span style="color:var(--green-l)">✓</span> IoT Optimized</div>
+        </div>
+      </div></div>
+    </div>
+  </div>
 </div>
 
-<!-- S6: SOL LORA -->
+<!-- S6: SOL 2 - MESH -->
 <div class="slide" data-s="6">
-<div style="max-width:1060px;padding:0 40px;width:100%">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center">
-<div>
-<span class="a-right tag tag-green">✓ Solution 1 of 5</span>
-<h2 class="a-right d1" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;line-height:1.1;margin-top:14px">No More <span style="color:#4ade80">Costly Networks</span></h2>
-<p class="a-right d3" style="color:var(--muted);font-size:13px;line-height:1.8;margin-top:14px">Using <strong style="color:#fff">LoRa technology</strong> — long-range communication with <strong style="color:#fff">very low power consumption</strong> and <strong style="color:#fff">no monthly subscription</strong> to cellular networks. Cost-effective for IoT data exchange.</p>
-<div class="a-right d5" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:18px">
-<span style="padding:5px 12px;background:rgba(34,197,94,.1);border-radius:8px;font-size:10px;font-weight:700;color:#4ade80;text-transform:uppercase">No Subscription</span>
-<span style="padding:5px 12px;background:rgba(34,197,94,.1);border-radius:8px;font-size:10px;font-weight:700;color:#4ade80;text-transform:uppercase">Low Power</span>
-<span style="padding:5px 12px;background:rgba(34,197,94,.1);border-radius:8px;font-size:10px;font-weight:700;color:#4ade80;text-transform:uppercase">Long Range</span>
-<span style="padding:5px 12px;background:rgba(34,197,94,.1);border-radius:8px;font-size:10px;font-weight:700;color:#4ade80;text-transform:uppercase">IoT Optimized</span>
-</div></div>
-<div class="a-scale d3"><div class="card" style="padding:28px;text-align:center">
-<div class="glow-icon blue" style="margin:0 auto 18px">📡</div>
-<p style="font-weight:700;font-size:20px;margin-bottom:4px" class="gt">LoRa — Long Range</p>
-<p style="font-size:10px;color:#3d6494;margin-bottom:22px">Spread spectrum modulation for IoT</p>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:16px"><p style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--blue-xl)">5-15km</p><p style="font-size:9px;color:#3d6494;text-transform:uppercase;margin-top:3px">Range</p></div>
-<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:16px"><p style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:#4ade80">$0</p><p style="font-size:9px;color:#3d6494;text-transform:uppercase;margin-top:3px">Monthly</p></div>
-<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:16px"><p style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:#fbbf24">~10mW</p><p style="font-size:9px;color:#3d6494;text-transform:uppercase;margin-top:3px">TX Power</p></div>
-<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:16px"><p style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:#f472b6">868MHz</p><p style="font-size:9px;color:#3d6494;text-transform:uppercase;margin-top:3px">Frequency</p></div>
-</div>
-<div style="margin-top:12px;padding:10px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.1);border-radius:10px"><p style="font-size:10px;color:#f87171"><strong>vs 4G:</strong> No SIM, works where cell towers don't reach, battery lasts days</p></div>
-</div></div>
-</div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;width:100%">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center">
+      <div class="anim-scale d2"><div class="glass" style="padding:32px;text-align:center;animation:glow 4s infinite">
+        <div style="font-size:48px;margin-bottom:16px">🕸️</div>
+        <h3 style="font-size:22px;font-weight:700" class="text-gradient">Mesh Network</h3>
+        <p style="font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.1em">Self-Relaying Architecture</p>
+        <div style="margin-top:24px;text-align:left;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)"><span style="color:var(--green-l)">✓</span> Transmitter & Receiver</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)"><span style="color:var(--green-l)">✓</span> Auto-Relaying Data</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)"><span style="color:var(--green-l)">✓</span> Reaches Final Destination</div>
+        </div>
+      </div></div>
+      <div>
+        <span class="anim-left tag tag-green">✓ Solution 2</span>
+        <h2 class="anim-left d1 heading-md" style="margin-top:16px">Distance Issues: <span style="color:var(--purple-l)">Mesh</span></h2>
+        <p class="anim-left d3" style="color:var(--muted);font-size:14px;line-height:1.8;margin-top:14px">Using a <strong style="color:var(--white)">LoRa Mesh Network</strong>, where each node operates as both a transmitter and receiver simultaneously, relaying data to the next node until it reaches the final destination.</p>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- S7: SOL MESH -->
+<!-- S7: SOL 3 - BUS ID -->
 <div class="slide" data-s="7">
-<div style="max-width:1060px;padding:0 40px;width:100%">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center">
-<div class="a-scale d2" style="order:1"><div class="card" style="padding:20px;height:320px;position:relative;overflow:hidden;background:rgba(3,6,15,.8)"><canvas id="meshCanvas" style="width:100%;height:100%"></canvas><div style="position:absolute;bottom:8px;left:10px;display:flex;gap:12px;font-size:9px;color:#3d6494"><span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:var(--blue-xl);display:inline-block"></span>Node</span><span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block"></span>Station</span></div></div></div>
-<div style="order:2">
-<span class="a-left tag tag-green">✓ Solution 2 of 5</span>
-<h2 class="a-left d1" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;line-height:1.1;margin-top:14px">LoRa Mesh <span style="color:#c084fc">Network</span></h2>
-<p class="a-left d3" style="color:var(--muted);font-size:13px;line-height:1.8;margin-top:14px">Each node operates as both <strong style="color:#fff">transmitter and receiver</strong> simultaneously, relaying data to the next node until it reaches the final destination.</p>
-<div class="a-left d4" style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
-<div style="display:flex;align-items:start;gap:10px;padding:10px 12px;background:rgba(0,0,0,.2);border-radius:10px"><div class="icon-box ib-purple" style="width:32px;height:32px;font-size:13px">🔀</div><div><p style="font-weight:700;font-size:11px;margin-bottom:2px">Multi-hop Relay</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Extends coverage beyond single-link range</p></div></div>
-<div style="display:flex;align-items:start;gap:10px;padding:10px 12px;background:rgba(0,0,0,.2);border-radius:10px"><div class="icon-box ib-purple" style="width:32px;height:32px;font-size:13px">🛡️</div><div><p style="font-weight:700;font-size:11px;margin-bottom:2px">Fault Tolerance</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Alternative routes found automatically</p></div></div>
-<div style="display:flex;align-items:start;gap:10px;padding:10px 12px;background:rgba(0,0,0,.2);border-radius:10px"><div class="icon-box ib-purple" style="width:32px;height:32px;font-size:13px">📈</div><div><p style="font-weight:700;font-size:11px;margin-bottom:2px">Scalability</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Add nodes without reconfiguring</p></div></div>
-</div></div>
-</div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;width:100%">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center">
+      <div>
+        <span class="anim-right tag tag-green">✓ Solution 3</span>
+        <h2 class="anim-right d1 heading-md" style="margin-top:16px">Interference: <span style="color:var(--amber-l)">Bus ID</span></h2>
+        <p class="anim-right d3" style="color:var(--muted);font-size:14px;line-height:1.8;margin-top:14px">To ensure accurate and organized tracking, a <strong style="color:var(--white)">unique identifier (Bus ID)</strong> is added to each bus. This identifier is sent with every LoRa message containing location and speed data.</p>
+        <p class="anim-right d4" style="color:var(--muted);font-size:14px;line-height:1.8;margin-top:8px">The station can immediately identify the source of the message and classify it according to the correct bus.</p>
+      </div>
+      <div class="anim-scale d2"><div class="glass" style="padding:28px">
+        <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:16px;text-align:center">Message Structure</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.15);border-radius:12px"><span style="font-size:16px">#</span><div><p style="font-size:9px;color:var(--muted);text-transform:uppercase">Bus ID</p><p style="font-family:var(--mono);font-weight:700;color:var(--amber-l);font-size:14px">07</p></div></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(37,99,235,.05);border:1px solid rgba(37,99,235,.1);border-radius:12px"><span style="font-size:16px">📍</span><div><p style="font-size:9px;color:var(--muted);text-transform:uppercase">Location Data</p><p style="font-family:var(--mono);font-weight:700;color:var(--blue-xl);font-size:13px">Lat / Lon</p></div></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.1);border-radius:12px"><span style="font-size:16px">⚡</span><div><p style="font-size:9px;color:var(--muted);text-transform:uppercase">Speed Data</p><p style="font-family:var(--mono);font-weight:700;color:var(--green-l);font-size:13px">km/h</p></div></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
 </div>
 
-<!-- S8: SOL BUS ID -->
+<!-- S8: SOL 4 - ACK -->
 <div class="slide" data-s="8">
-<div style="max-width:1060px;padding:0 40px;width:100%">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center">
-<div>
-<span class="a-right tag tag-green">✓ Solution 3 of 5</span>
-<h2 class="a-right d1" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;line-height:1.1;margin-top:14px">Unique <span style="color:#fbbf24">Bus ID</span></h2>
-<p class="a-right d3" style="color:var(--muted);font-size:13px;line-height:1.8;margin-top:14px">A <strong style="color:#fbbf24">unique identifier</strong> is added to each bus. Sent with every LoRa message containing location and speed data. The station immediately identifies the source and classifies it correctly.</p>
-<div class="a-right d5" style="margin-top:14px;padding:10px 16px;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.12);border-radius:10px"><p style="font-size:11px;color:#fbbf24"><strong>Result:</strong> No confusion between buses — each has a unique digital identity</p></div>
-</div>
-<div class="a-scale d3"><div class="card" style="padding:24px">
-<p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#3d6494;margin-bottom:14px;text-align:center">LoRa Message Structure</p>
-<div style="display:flex;flex-direction:column;gap:8px">
-<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:12px"><span style="font-size:16px">#</span><div style="flex:1"><p style="font-size:9px;color:#3d6494;text-transform:uppercase">Bus ID</p><p style="font-family:var(--mono);font-weight:700;color:var(--blue-xl);font-size:14px">07</p></div></div>
-<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.1);border-radius:12px"><span style="font-size:16px">📍</span><div style="flex:1"><p style="font-size:9px;color:#3d6494;text-transform:uppercase">Latitude</p><p style="font-family:var(--mono);font-weight:700;color:var(--blue-xl);font-size:13px">33.9716° N</p></div></div>
-<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.1);border-radius:12px"><span style="font-size:16px">📍</span><div style="flex:1"><p style="font-size:9px;color:#3d6494;text-transform:uppercase">Longitude</p><p style="font-family:var(--mono);font-weight:700;color:var(--blue-xl);font-size:13px">-6.8498° W</p></div></div>
-<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.1);border-radius:12px"><span style="font-size:16px">⚡</span><div style="flex:1"><p style="font-size:9px;color:#3d6494;text-transform:uppercase">Speed</p><p style="font-family:var(--mono);font-weight:700;color:#4ade80;font-size:13px">42 km/h</p></div></div>
-</div>
-<div style="display:flex;gap:8px;margin-top:12px;justify-content:center">
-<div style="padding:5px 14px;background:rgba(37,99,235,.15);border-radius:8px;text-align:center"><p style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue-xl)">#07</p></div>
-<div style="padding:5px 14px;background:rgba(96,165,250,.08);border-radius:8px;text-align:center"><p style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue-l)">#12</p></div>
-<div style="padding:5px 14px;background:rgba(16,185,129,.08);border-radius:8px;text-align:center"><p style="font-family:var(--mono);font-size:13px;font-weight:700;color:#34d399">#23</p></div>
-</div></div></div>
-</div>
-</div>
+  <div style="max-width:900px;padding:0 40px;width:100%">
+    <div style="text-align:center;margin-bottom:28px">
+      <span class="anim-up tag tag-green">✓ Solution 4</span>
+      <h2 class="anim-up d1 heading-lg" style="margin-top:16px">Message Loss: <span style="color:var(--purple-l)">ACK Mechanism</span></h2>
+    </div>
+    <div class="anim-up d2" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+      <div class="glass" style="width:100%;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:46px;height:46px;border-radius:14px;background:rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;font-size:20px">🚌</div><p style="font-weight:700;font-size:13px">Bus sends Data</p></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:7px;background:rgba(37,99,235,.2);color:var(--blue-xl)">DATA →</span></div>
+        <div style="display:flex;align-items:center;gap:12px"><p style="font-weight:700;font-size:13px">Station receives</p><div style="width:46px;height:46px;border-radius:14px;background:rgba(16,185,129,.12);display:flex;align-items:center;justify-content:center;font-size:20px">🏢</div></div>
+      </div>
+      <div style="color:rgba(255,255,255,.08);font-size:16px">↓</div>
+      <div class="glass" style="width:100%;padding:18px 22px;background:rgba(16,185,129,.04);border-color:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap">
+        <span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:7px;background:rgba(16,185,129,.15);color:var(--green-l)">← ACK</span>
+        <span style="font-size:12px;color:var(--muted)">Station sends acknowledgment back</span>
+      </div>
+      <div style="color:rgba(255,255,255,.08);font-size:16px">↓</div>
+      <div class="glass" style="width:100%;padding:18px 22px;background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.15);display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap">
+        <span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:7px;background:rgba(239,68,68,.15);color:var(--red-l)">NO ACK?</span>
+        <span style="font-size:12px;color:var(--muted)">If not received in time</span>
+        <span style="color:rgba(255,255,255,.12)">→</span>
+        <span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:7px;background:rgba(245,158,11,.15);color:var(--amber-l)">AUTO RESEND</span>
+        <span style="font-size:12px;color:var(--amber-l);font-weight:600">until confirmed</span>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- S9: SOL ACK -->
+<!-- S9: SOL 5 - HAVERSINE -->
 <div class="slide" data-s="9">
-<div style="max-width:900px;padding:0 40px;width:100%">
-<div style="text-align:center;margin-bottom:28px">
-<span class="a-up tag tag-green">✓ Solution 4 of 5</span>
-<h2 class="a-up d1" style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.1;margin-top:12px">ACK <span style="color:#f472b6">Mechanism</span></h2>
-<p class="a-up d2" style="color:var(--muted);font-size:13px;margin-top:6px;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.7">Simple yet highly effective — if the bus doesn't receive acknowledgment within a timeout, it automatically resends.</p>
-</div>
-<div class="a-up d3" style="display:flex;flex-direction:column;align-items:center;gap:14px">
-<div class="card" style="width:100%;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-<div style="display:flex;align-items:center;gap:12px"><div style="width:46px;height:46px;border-radius:14px;background:rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;font-size:20px">🚌</div><div><p style="font-weight:700;font-size:13px">Bus Node</p></div></div>
-<div style="display:flex;align-items:center;gap:8px"><span class="ack-label" style="background:rgba(37,99,235,.2);color:var(--blue-xl)">DATA →</span><div style="width:70px;height:2px;background:var(--blue-xl);position:relative"><div style="position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:8px;height:8px;background:var(--blue-xl);border-radius:50%;animation:busMove 1.5s ease-in-out infinite"></div></div></div>
-<div style="display:flex;align-items:center;gap:12px"><div><p style="font-weight:700;font-size:13px">Station</p></div><div style="width:46px;height:46px;border-radius:14px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;font-size:20px">🏢</div></div>
-</div>
-<div style="color:rgba(255,255,255,.08);font-size:16px">↓</div>
-<div class="card" style="width:100%;padding:18px 22px;background:rgba(34,197,94,.04);border-color:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap">
-<span class="ack-label" style="background:rgba(34,197,94,.15);color:#4ade80">← ACK</span>
-<span style="font-size:12px;color:var(--muted)">Station confirms → Bus receives ✓</span>
-</div>
-<div style="color:rgba(255,255,255,.08);font-size:16px">↓</div>
-<div class="card" style="width:100%;padding:18px 22px;background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.15);display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap">
-<span class="ack-label" style="background:rgba(239,68,68,.15);color:#f87171">NO ACK?</span>
-<span style="font-size:12px;color:var(--muted)">within timeout</span>
-<span style="color:rgba(255,255,255,.12)">→</span>
-<span class="ack-label" style="background:rgba(251,191,36,.15);color:#fbbf24">AUTO RETRY</span>
-<span style="font-size:12px;color:#fbbf24;font-weight:600">until confirmed</span>
-</div>
-<div class="a-fade d5" style="padding:10px 18px;background:rgba(37,99,235,.06);border:1px solid var(--border2);border-radius:10px;display:flex;align-items:center;gap:8px"><span style="font-size:14px">🔄</span><p style="font-size:11px;color:var(--blue-xl)"><strong>Guaranteed delivery:</strong> No data is ever silently lost</p></div>
-</div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;width:100%">
+    <div style="text-align:center;margin-bottom:32px">
+      <span class="anim-up tag tag-green">✓ Solution 5</span>
+      <h2 class="anim-up d1 heading-lg" style="margin-top:16px">Map Distance: <span class="text-gradient">Haversine</span></h2>
+    </div>
+    <div class="anim-up d2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="glass" style="padding:24px">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px">Mathematical Formula</h3>
+        <div style="background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;font-family:var(--mono);font-size:12px;margin-bottom:16px">
+          <div style="color:var(--blue-xl);line-height:2">a = sin²(Δφ/2) + cos(φ₁)·cos(φ₂)·sin²(Δλ/2)</div>
+          <div style="color:#1e3a6e;font-size:10px;margin:6px 0">─────────────────────────</div>
+          <div style="color:var(--blue-xl);line-height:2">c = 2·atan2(√a, √(1−a))</div>
+          <div style="color:#1e3a6e;font-size:10px;margin:6px 0">─────────────────────────</div>
+          <div style="color:var(--white);font-weight:700;font-size:14px">d = R · c</div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6">This formula is based on the Earth's radius and provides very accurate results compared to simpler methods. It is more than sufficient for current tracking applications and is widely used in GPS and IoT systems.</p>
+      </div>
+      <div class="code-block">
+        <div class="cb-head"><div class="cb-dot cb-r"></div><div class="cb-dot cb-y"></div><div class="cb-dot cb-g"></div><span class="cb-name">haversine.cpp</span></div>
+        <pre><span class="cm">// Haversine Formula</span>
+<span class="kw">#define</span> <span class="fn">R</span> <span class="num">6371000</span> <span class="cm">// Earth radius</span>
+
+<span class="kw">double</span> <span class="fn">haversine</span>(
+    <span class="kw">double</span> lat1, <span class="kw">double</span> lon1,
+    <span class="kw">double</span> lat2, <span class="kw">double</span> lon2
+) {
+    <span class="kw">double</span> dLat = <span class="fn">toRad</span>(lat2 - lat1);
+    <span class="kw">double</span> dLon = <span class="fn">toRad</span>(lon2 - lon1);
+
+    <span class="kw">double</span> a = <span class="fn">sin</span>(dLat/<span class="num">2</span>)*<span class="fn">sin</span>(dLat/<span class="num">2</span>) +
+        <span class="fn">cos</span>(<span class="fn">toRad</span>(lat1))*<span class="fn">cos</span>(<span class="fn">toRad</span>(lat2))*
+        <span class="fn">sin</span>(dLon/<span class="num">2</span>)*<span class="fn">sin</span>(dLon/<span class="num">2</span>);
+
+    <span class="kw">double</span> c = <span class="num">2</span>*<span class="fn">atan2</span>(
+        <span class="fn">sqrt</span>(a), <span class="fn">sqrt</span>(<span class="num">1</span>-a));
+
+    <span class="kw">return</span> R * c; <span class="cm">// meters</span>
+}</pre>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- S10: SOL HAVERSINE -->
+<!-- S10: HW BUS NODE -->
 <div class="slide" data-s="10">
-<div style="max-width:1060px;padding:0 40px;width:100%">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start">
-<div>
-<span class="a-right tag tag-green">✓ Solution 5 of 5</span>
-<h2 class="a-right d1" style="font-size:clamp(1.6rem,3vw,2.4rem);font-weight:700;line-height:1.1;margin-top:14px">Haversine <span class="gt">Formula</span></h2>
-<p class="a-right d3" style="color:var(--muted);font-size:12.5px;line-height:1.8;margin-top:12px">Calculates approximate distance between two points on Earth's surface. Based on Earth's radius — <strong style="color:#fff">very accurate</strong> compared to simpler methods.</p>
-<div class="a-right d4" style="margin-top:12px;padding:12px 16px;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.12);border-radius:10px"><p style="font-size:11px;color:#fbbf24;line-height:1.6"><strong>⚠ Note:</strong> Not 100% precise — affected by terrain, non-linear roads, elevation. But <strong>more than sufficient</strong> for tracking. Widely used in GPS & IoT.</p></div>
-<div class="a-right d5" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
-<div style="background:rgba(0,0,0,.3);border-radius:10px;padding:12px;text-align:center"><p style="font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--cyan-l)">6,371 km</p><p style="font-size:8px;color:#3d6494;text-transform:uppercase;margin-top:2px">Earth Radius</p></div>
-<div style="background:rgba(0,0,0,.3);border-radius:10px;padding:12px;text-align:center"><p style="font-family:var(--mono);font-size:1rem;font-weight:700;color:#4ade80">~99.9%</p><p style="font-size:8px;color:#3d6494;text-transform:uppercase;margin-top:2px">Accuracy</p></div>
-</div>
-<div class="a-right d6" style="margin-top:10px;font-size:11px;color:#4d7bad;line-height:1.7"><strong style="color:var(--blue-xl);font-family:var(--mono)">φ</strong> = Latitude · <strong style="color:var(--blue-xl);font-family:var(--mono)">λ</strong> = Longitude · <strong style="color:var(--blue-xl);font-family:var(--mono)">R</strong> = 6371km · <strong style="color:var(--blue-xl);font-family:var(--mono)">d</strong> = Distance</div>
-</div>
-<div class="a-scale d2">
-<div class="formula-box" style="padding:18px;margin-bottom:10px"><div class="fl" style="font-size:11px">a = sin²(Δφ/2) + cos(φ₁)·cos(φ₂)·sin²(Δλ/2)</div><div class="fs">─────────────────────────</div><div class="fl" style="font-size:11px">c = 2·atan2(√a, √(1−a))</div><div class="fs">─────────────────────────</div><div class="fr" style="font-size:14px">d = R · c</div></div>
-<div class="code-block"><div class="cb-header"><div class="cb-dot r"></div><div class="cb-dot y"></div><div class="cb-dot g"></div><span class="cb-filename">haversine.cpp</span></div>
-<pre><span class="cm">// Haversine Formula</span>
-<span class="kw">#define</span> R <span class="num">6371000</span>
-
-<span class="kw">double</span> <span class="fn">haversine</span>(<span class="kw">double</span> lat1, <span class="kw">double</span> lon1,
-                  <span class="kw">double</span> lat2, <span class="kw">double</span> lon2) {
-  <span class="kw">double</span> dLat = <span class="fn">toRad</span>(lat2 - lat1);
-  <span class="kw">double</span> dLon = <span class="fn">toRad</span>(lon2 - lon1);
-  <span class="kw">double</span> a = <span class="fn">sin</span>(dLat/<span class="num">2</span>)*<span class="fn">sin</span>(dLat/<span class="num">2</span>) +
-    <span class="fn">cos</span>(<span class="fn">toRad</span>(lat1))*<span class="fn">cos</span>(<span class="fn">toRad</span>(lat2))*
-    <span class="fn">sin</span>(dLon/<span class="num">2</span>)*<span class="fn">sin</span>(dLon/<span class="num">2</span>);
-  <span class="kw">double</span> c = <span class="num">2</span>*<span class="fn">atan2</span>(<span class="fn">sqrt</span>(a),<span class="fn">sqrt</span>(<span class="num">1</span>-a));
-  <span class="kw">return</span> R * c; <span class="cm">// meters</span>
-}
-<span class="cm">// ETA in minutes</span>
-<span class="kw">int</span> <span class="fn">calcETA</span>(<span class="kw">double</span> d, <span class="kw">double</span> spd) {
-  <span class="kw">if</span>(spd&lt;<span class="num">1</span>)<span class="kw">return</span> -<span class="num">1</span>;
-  <span class="kw">return</span>(<span class="kw">int</span>)((d/<span class="num">1000.0</span>)/spd*<span class="num">60</span>);
-}</pre></div>
-</div>
-</div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;width:100%">
+    <div style="text-align:center;margin-bottom:40px">
+      <span class="anim-up tag">⚙️ Hardware</span>
+      <h2 class="anim-up d1 heading-lg" style="margin-top:16px">Bus <span class="text-gradient">Node</span></h2>
+    </div>
+    <div class="anim-up d2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px;margin:0 auto">
+      <div class="glass" style="padding:28px;display:flex;flex-direction:column;align-items:center;gap:16px"><div class="icon-box ib-blue" style="width:56px;height:56px;font-size:26px">💻</div><h3 style="font-size:17px;font-weight:700">ESP32</h3><p style="font-size:13px;color:var(--muted);text-align:center">Main microcontroller unit</p></div>
+      <div class="glass" style="padding:28px;display:flex;flex-direction:column;align-items:center;gap:16px"><div class="icon-box ib-blue" style="width:56px;height:56px;font-size:26px">📻</div><h3 style="font-size:17px;font-weight:700">LoRa RA-01</h3><p style="font-size:13px;color:var(--muted);text-align:center">Long-range radio module</p></div>
+      <div class="glass" style="padding:28px;display:flex;flex-direction:column;align-items:center;gap:16px"><div class="icon-box ib-blue" style="width:56px;height:56px;font-size:26px">🛰️</div><h3 style="font-size:17px;font-weight:700">GPS Module</h3><p style="font-size:13px;color:var(--muted);text-align:center">Satellite positioning</p></div>
+      <div class="glass" style="padding:28px;display:flex;flex-direction:column;align-items:center;gap:16px"><div class="icon-box ib-blue" style="width:56px;height:56px;font-size:26px">⏻</div><h3 style="font-size:17px;font-weight:700">ON/OFF</h3><p style="font-size:13px;color:var(--muted);text-align:center">Power control switch</p></div>
+    </div>
+  </div>
 </div>
 
-<!-- S11: HW BUS -->
+<!-- S11: HW STATION -->
 <div class="slide" data-s="11">
-<div style="max-width:1000px;padding:0 40px;width:100%">
-<div style="text-align:center;margin-bottom:28px">
-<span class="a-up tag">⚙ Hardware</span>
-<h2 class="a-up d1" style="font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1;margin-top:12px">Bus Node <span style="color:rgba(255,255,255,.25)">Components</span></h2>
-<p class="a-up d2" style="font-size:12px;color:var(--muted)">Mobile device installed inside each bus</p>
-</div>
-<div class="a-up d3" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-blue" style="font-size:20px">💻</div><div><p style="font-weight:700;font-size:14px">ESP32</p><p style="font-size:10px;color:#3d6494">Main microcontroller</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Reads GPS data, prepares LoRa packet with Bus ID + coordinates + speed, manages ACK timeout and retry.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot"></span>Dual-core 240MHz</div><div class="spec"><span class="spec-dot"></span>520KB SRAM, 4MB flash</div><div class="spec"><span class="spec-dot"></span>WiFi + Bluetooth built-in</div></div></div>
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-blue" style="font-size:20px">📻</div><div><p style="font-weight:700;font-size:14px">LoRa RA-01</p><p style="font-size:10px;color:#3d6494">SX1278 transceiver</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Handles long-range radio at 433MHz with SPI interface. Spread spectrum modulation for robust communication.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot"></span>SX1278 — 433MHz ISM</div><div class="spec"><span class="spec-dot"></span>+20dBm max TX power</div><div class="spec"><span class="spec-dot"></span>SPI to ESP32</div></div></div>
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-blue" style="font-size:20px">🛰️</div><div><p style="font-weight:700;font-size:14px">GPS Module</p><p style="font-size:10px;color:#3d6494">Satellite positioning</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Provides real-time lat/lon from GPS satellites. Data parsed from NMEA sentences at regular intervals.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot"></span>UART serial communication</div><div class="spec"><span class="spec-dot"></span>NMEA 0183 protocol</div><div class="spec"><span class="spec-dot"></span>2.5m CEP accuracy</div></div></div>
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-blue" style="font-size:20px">⏻</div><div><p style="font-weight:700;font-size:14px">ON/OFF Switch</p><p style="font-size:10px;color:#3d6494">Power control</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Toggle switch for the bus driver to power on/off the tracking unit without opening the enclosure.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot"></span>ESP32 enable pin</div><div class="spec"><span class="spec-dot"></span>LED power indicator</div><div class="spec"><span class="spec-dot"></span>External access</div></div></div>
-</div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;width:100%">
+    <div style="text-align:center;margin-bottom:40px">
+      <span class="anim-up tag tag-green">⚙️ Hardware</span>
+      <h2 class="anim-up d1 heading-lg" style="margin-top:16px">Bus <span class="text-gradient">Station</span></h2>
+    </div>
+    <div class="anim-up d2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px;margin:0 auto">
+      <div class="glass" style="padding:28px;display:flex;flex-direction:column;align-items:center;gap:16px"><div class="icon-box ib-green" style="width:56px;height:56px;font-size:26px">🖥️</div><h3 style="font-size:17px;font-weight:700">LCD CYD ESP32</h3><p style="font-size:13px;color:var(--muted);text-align:center">Color TFT display + MCU</p></div>
+      <div class="glass" style="padding:28px;display:flex;flex-direction:column;align-items:center;gap:16px"><div class="icon-box ib-green" style="width:56px;height:56px;font-size:26px">📻</div><h3 style="font-size:17px;font-weight:700">LoRa Module</h3><p style="font-size:13px;color:var(--muted);text-align:center">Receives data from buses</p></div>
+      <div class="glass" style="padding:28px;display:flex;flex-direction:column;align-items:center;gap:16px"><div class="icon-box ib-green" style="width:56px;height:56px;font-size:26px">🔋</div><h3 style="font-size:17px;font-weight:700">Lithium Battery</h3><p style="font-size:13px;color:var(--muted);text-align:center">Portable power source</p></div>
+      <div class="glass" style="padding:28px;display:flex;flex-direction:column;align-items:center;gap:16px"><div class="icon-box ib-green" style="width:56px;height:56px;font-size:26px">⏻</div><h3 style="font-size:17px;font-weight:700">ON/OFF</h3><p style="font-size:13px;color:var(--muted);text-align:center">Power management switch</p></div>
+    </div>
+  </div>
 </div>
 
-<!-- S12: HW STATION -->
+<!-- S12: DATA FLOW -->
 <div class="slide" data-s="12">
-<div style="max-width:1000px;padding:0 40px;width:100%">
-<div style="text-align:center;margin-bottom:28px">
-<span class="a-up tag tag-green">⚙ Hardware</span>
-<h2 class="a-up d1" style="font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1;margin-top:12px">Station Node <span style="color:rgba(255,255,255,.25)">Components</span></h2>
-<p class="a-up d2" style="font-size:12px;color:var(--muted)">Stationary device at each bus stop</p>
-</div>
-<div class="a-up d3" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-green" style="font-size:20px">🖥️</div><div><p style="font-weight:700;font-size:14px">LCD CYD ESP32</p><p style="font-size:10px;color:#3d6494">Color TFT + MCU</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Receives LoRa data, processes it, calculates distance/ETA, displays results on color TFT screen for passengers.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>2.4" TFT 320×240</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Resistive touch</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>WiFi for web server</div></div></div>
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-green" style="font-size:20px">📻</div><div><p style="font-weight:700;font-size:14px">LoRa Module</p><p style="font-size:10px;color:#3d6494">Receiver unit</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Configured in receive mode. Listens for packets from any bus, decodes them, sends ACK confirmations back.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Continuous receive mode</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Auto-ACK on decode</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>CRC verification</div></div></div>
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-green" style="font-size:20px">🔋</div><div><p style="font-weight:700;font-size:14px">Lithium Battery</p><p style="font-size:10px;color:#3d6494">Portable power</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Rechargeable lithium battery for standalone operation at bus stops without mains electricity access.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Li-Po 3.7V nominal</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>TP4056 charger</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>USB-C port</div></div></div>
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="icon-box ib-green" style="font-size:20px">⏻</div><div><p style="font-weight:700;font-size:14px">ON/OFF Switch</p><p style="font-size:10px;color:#3d6494">Power management</p></div></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">Station staff can power the device on/off as needed for maintenance or during off-service hours.</p><div style="display:flex;flex-direction:column;gap:4px"><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Easy toggle control</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Power LED indicator</div><div class="spec"><span class="spec-dot" style="background:#22c55e"></span>Low battery warning</div></div></div>
-</div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;width:100%">
+    <div style="text-align:center;margin-bottom:40px">
+      <span class="anim-up tag">⚡ Working Mechanism</span>
+      <h2 class="anim-up d1 heading-lg" style="margin-top:16px">Data <span class="text-gradient">Flow</span></h2>
+    </div>
+    <div class="anim-up d2" style="display:grid;grid-template-columns:1fr 1fr;gap:40px">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="timeline-step"><div class="tl-num">1</div><div><h3 style="font-size:15px;font-weight:700;margin-bottom:4px">Data Collection (The Bus)</h3><p style="font-size:13px;color:var(--muted);line-height:1.5">The ESP32 unit receives the coordinates from the GPS and combines them with the bus ID.</p></div></div>
+        <div class="timeline-step"><div class="tl-num">2</div><div><h3 style="font-size:15px;font-weight:700;margin-bottom:4px">LoRa Transmission</h3><p style="font-size:13px;color:var(--muted);line-height:1.5">The data is transmitted via the LoRa module at a low frequency and low power over long distances.</p></div></div>
+        <div class="timeline-step"><div class="tl-num">3</div><div><h3 style="font-size:15px;font-weight:700;margin-bottom:4px">Bus Stop Reception</h3><p style="font-size:13px;color:var(--muted);line-height:1.5">The bus stop receives the packet and decodes it immediately.</p></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="timeline-step"><div class="tl-num">4</div><div><h3 style="font-size:15px;font-weight:700;margin-bottom:4px">Data Processing</h3><p style="font-size:13px;color:var(--muted);line-height:1.5">The station processes the data directly without storing it and prepares it for display.</p></div></div>
+        <div class="timeline-step"><div class="tl-num">5</div><div><h3 style="font-size:15px;font-weight:700;margin-bottom:4px">Final Display</h3><p style="font-size:13px;color:var(--muted);line-height:1.5">The web interface retrieves the data and shows the bus's location, speed, and estimated arrival time.</p></div></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- S13: DATA FLOW -->
+<!-- S13: FUTURE -->
 <div class="slide" data-s="13">
-<div style="max-width:1100px;padding:0 32px;width:100%">
-<div style="text-align:center;margin-bottom:24px">
-<span class="a-up tag">⚡ Working Mechanism</span>
-<h2 class="a-up d1" style="font-size:clamp(1.5rem,3vw,2.4rem);font-weight:700;line-height:1.1;margin-top:10px">Data Flow — <span class="gt">5 Stages</span></h2>
-<p class="a-up d2" style="font-size:12px;color:var(--muted);margin-top:4px">Precise sequence ensuring safe and efficient data transmission</p>
-</div>
-<div class="a-up d3" style="display:flex;align-items:stretch;justify-content:center;gap:6px;flex-wrap:wrap">
-<div class="card" style="padding:16px;width:175px;text-align:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px">🛰️</div><span class="step-badge" style="margin:0 auto 6px;display:flex">1</span><p style="font-weight:700;font-size:12px;margin-bottom:5px">Data Collection</p><p style="font-size:10px;color:#3d6494;line-height:1.5">ESP32 receives GPS coordinates + Bus ID</p></div>
-<div style="display:flex;align-items:center;color:rgba(255,255,255,.06);font-size:14px;padding-bottom:32px;flex-shrink:0">›</div>
-<div class="card" style="padding:16px;width:175px;text-align:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px">📻</div><span class="step-badge" style="margin:0 auto 6px;display:flex;background:rgba(168,85,247,.2);border-color:rgba(168,85,247,.3);color:#c084fc">2</span><p style="font-weight:700;font-size:12px;margin-bottom:5px">LoRa TX</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Low freq, low power, long range</p></div>
-<div style="display:flex;align-items:center;color:rgba(255,255,255,.06);font-size:14px;padding-bottom:32px;flex-shrink:0">›</div>
-<div class="card" style="padding:16px;width:175px;text-align:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(59,130,246,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px">📥</div><span class="step-badge" style="margin:0 auto 6px;display:flex;background:rgba(59,130,246,.2);border-color:rgba(59,130,246,.3);color:var(--blue-l)">3</span><p style="font-weight:700;font-size:12px;margin-bottom:5px">Reception</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Station decodes packet, sends ACK</p></div>
-<div style="display:flex;align-items:center;color:rgba(255,255,255,.06);font-size:14px;padding-bottom:32px;flex-shrink:0">›</div>
-<div class="card" style="padding:16px;width:175px;text-align:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(251,146,60,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px">⚙️</div><span class="step-badge" style="margin:0 auto 6px;display:flex;background:rgba(251,146,60,.2);border-color:rgba(251,146,60,.3);color:#fb923c">4</span><p style="font-weight:700;font-size:12px;margin-bottom:5px">Processing</p><p style="font-size:10px;color:#3d6494;line-height:1.5">Distance & ETA via Haversine</p></div>
-<div style="display:flex;align-items:center;color:rgba(255,255,255,.06);font-size:14px;padding-bottom:32px;flex-shrink:0">›</div>
-<div class="card" style="padding:16px;width:175px;text-align:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px">📺</div><span class="step-badge" style="margin:0 auto 6px;display:flex;background:rgba(34,197,94,.2);border-color:rgba(34,197,94,.3);color:#4ade80">5</span><p style="font-weight:700;font-size:12px;margin-bottom:5px">Display</p><p style="font-size:10px;color:#3d6494;line-height:1.5">TFT screen + web interface</p></div>
-</div>
-<div class="a-up d5" style="display:flex;justify-content:center;margin-top:16px">
-<div style="display:flex;align-items:center;gap:18px;padding:12px 24px;background:rgba(0,0,0,.3);border:1px solid var(--border2);border-radius:12px">
-<div style="text-align:center"><p style="font-size:8px;color:#3d6494;text-transform:uppercase">Location</p><p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px">33.9716°N</p></div>
-<div style="width:1px;height:26px;background:var(--border)"></div>
-<div style="text-align:center"><p style="font-size:8px;color:#3d6494;text-transform:uppercase">Speed</p><p style="font-family:var(--mono);font-size:11px;color:#4ade80;margin-top:2px">42 km/h</p></div>
-<div style="width:1px;height:26px;background:var(--border)"></div>
-<div style="text-align:center"><p style="font-size:8px;color:#3d6494;text-transform:uppercase">Distance</p><p style="font-family:var(--mono);font-size:11px;color:var(--cyan-l);margin-top:2px">1,250 m</p></div>
-<div style="width:1px;height:26px;background:var(--border)"></div>
-<div style="text-align:center"><p style="font-size:8px;color:#3d6494;text-transform:uppercase">ETA</p><p style="font-family:var(--mono);font-size:11px;color:#fbbf24;margin-top:2px">~3 min</p></div>
-<div style="width:1px;height:26px;background:var(--border)"></div>
-<div style="text-align:center"><p style="font-size:8px;color:#3d6494;text-transform:uppercase">Bus ID</p><p style="font-family:var(--mono);font-size:11px;color:var(--blue-xl);margin-top:2px">#07</p></div>
-</div></div>
-</div>
+  <div style="max-width:1000px;padding:0 40px;width:100%">
+    <div style="text-align:center;margin-bottom:40px">
+      <span class="anim-up tag tag-amber">🚀 Future Prospects</span>
+      <h2 class="anim-up d1 heading-lg" style="margin-top:16px">Advantages & <span class="text-gradient">Future</span></h2>
+    </div>
+    <div class="anim-up d2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="glass" style="padding:28px"><div class="icon-box ib-amber" style="margin-bottom:16px">📱</div><h3 style="font-size:17px;font-weight:700;margin-bottom:10px">Mobile Application</h3><p style="font-size:13px;color:var(--muted);line-height:1.6">Creating a standalone mobile application for passengers instead of the web interface to enhance the user experience.</p></div>
+      <div class="glass" style="padding:28px"><div class="icon-box ib-green" style="margin-bottom:16px">🌍</div><h3 style="font-size:17px;font-weight:700;margin-bottom:10px">Wider Coverage</h3><p style="font-size:13px;color:var(--muted);line-height:1.6">If we secure funding, we will expand nodes to cover the entire city—and why not the whole of Morocco. LoRa is ideal for rural areas.</p></div>
+      <div class="glass" style="padding:28px"><div class="icon-box ib-purple" style="margin-bottom:16px">🌡️</div><h3 style="font-size:17px;font-weight:700;margin-bottom:10px">Adding Sensors</h3><p style="font-size:13px;color:var(--muted);line-height:1.6">Integrating sensors to measure the bus's temperature or monitor the driver's behavior.</p></div>
+      <div class="glass" style="padding:28px"><div class="icon-box ib-blue" style="margin-bottom:16px">📡</div><h3 style="font-size:17px;font-weight:700;margin-bottom:10px">Project Future</h3><p style="font-size:13px;color:var(--muted);line-height:1.6">LoRa's coverage range extends for kilometers, making it ideal for rural or open areas where traditional networks fail.</p></div>
+    </div>
+  </div>
 </div>
 
-<!-- S14: COMPARISON -->
+<!-- S14: LIVE PROJECT / THANK YOU -->
 <div class="slide" data-s="14">
-<div style="max-width:920px;padding:0 40px;width:100%">
-<div style="text-align:center;margin-bottom:24px">
-<span class="a-up tag tag-purple">⚖ Comparison</span>
-<h2 class="a-up d1" style="font-size:clamp(1.5rem,3vw,2.4rem);font-weight:700;line-height:1.1;margin-top:10px">LoRa Track vs <span class="gt">Traditional Solutions</span></h2>
-</div>
-<div class="a-up d2 card" style="overflow:hidden"><div style="overflow-x:auto">
-<table class="cmp-table">
-<thead><tr><th>Criteria</th><th>LoRa Track ✦</th><th>GPS + 4G</th><th>GPS + WiFi</th><th>RFID</th></tr></thead>
-<tbody>
-<tr><td class="feat">Needs Internet</td><td><span class="yes">✗ No</span></td><td><span class="no">✓ Yes</span></td><td><span class="no">✓ Yes</span></td><td><span class="yes">✗ No</span></td></tr>
-<tr><td class="feat">Real-time Tracking</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="no">✗ Limited</span></td><td><span class="no">✗ Points only</span></td></tr>
-<tr><td class="feat">Coverage Range</td><td class="amber">5-15 km</td><td>Per network</td><td>50-100 m</td><td>1-5 m</td></tr>
-<tr><td class="feat">Power Consumption</td><td class="amber">Very Low</td><td><span class="no">High</span></td><td>Medium</td><td>Low</td></tr>
-<tr><td class="feat">Operating Cost</td><td class="amber">Near Zero</td><td><span class="no">High (SIM)</span></td><td>Medium</td><td>Low</td></tr>
-<tr><td class="feat">Distance/ETA Calc</td><td><span class="yes">✓ Auto</span></td><td><span class="yes">✓</span></td><td><span class="no">✗</span></td><td><span class="no">✗</span></td></tr>
-<tr><td class="feat">Fault Tolerance</td><td class="amber">High (Mesh)</td><td><span class="no">Low</span></td><td><span class="no">Low</span></td><td>Medium</td></tr>
-<tr><td class="feat">Local LCD Display</td><td><span class="yes">✓ TFT</span></td><td><span class="no">✗</span></td><td><span class="no">✗</span></td><td><span class="yes">✓</span></td></tr>
-<tr><td class="feat">Multi-bus Support</td><td><span class="yes">✓ Bus ID</span></td><td><span class="yes">✓</span></td><td><span class="no">✗</span></td><td><span class="no">✗</span></td></tr>
-</tbody></table></div></div>
-<div class="a-fade d4" style="text-align:center;margin-top:14px"><p style="font-size:11px;color:var(--blue-xl)">LoRa Track is the <strong>only solution</strong> with real-time tracking + distance calc + local display — all without internet</p></div>
-</div>
-</div>
-
-<!-- S15: LIVE SIM -->
-<div class="slide" data-s="15">
-<div style="max-width:1020px;padding:0 40px;width:100%">
-<div style="text-align:center;margin-bottom:20px">
-<span class="a-up tag tag-green"><span class="dot-live"></span> Live Simulation</span>
-<h2 class="a-up d1" style="font-size:clamp(1.5rem,3vw,2.4rem);font-weight:700;line-height:1.1;margin-top:10px">System <span style="color:#4ade80">In Action</span></h2>
-</div>
-<div class="a-up d2" style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px">
-<div><div class="mini-map"><div class="mini-map-grid"></div>
-<div class="mini-road" style="width:78%;height:3px;top:38%;left:11%"></div><div class="mini-road" style="width:3px;height:55%;top:22%;left:47%"></div><div class="mini-road" style="width:55%;height:3px;top:62%;left:25%"></div><div class="mini-road" style="width:3px;height:38%;top:38%;left:73%"></div>
-<div class="mini-station" style="top:36%;left:13%"></div><div style="position:absolute;top:calc(36% + 14px);left:5%;font-size:8px;color:#3d6494;white-space:nowrap;z-index:4">Main Station</div>
-<div class="mini-station" style="top:60%;left:27%"></div><div style="position:absolute;top:calc(60% + 14px);left:18%;font-size:8px;color:#3d6494;white-space:nowrap;z-index:4">Mid Stop</div>
-<div class="mini-station" style="top:36%;left:71%"></div><div style="position:absolute;top:calc(36% + 14px);left:63%;font-size:8px;color:#3d6494;white-space:nowrap;z-index:4">End Station</div>
-<div class="mini-bus" id="mapBus" style="top:35%;left:28%">🚌</div>
-<div style="position:absolute;top:8px;right:8px;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.7);border-radius:6px;padding:4px 8px;font-size:9px;font-weight:600;z-index:10"><span class="dot-live" style="width:5px;height:5px"></span><span style="color:#22c55e">LIVE</span></div>
-</div></div>
-<div style="display:flex;flex-direction:column;gap:10px">
-<div class="card" style="padding:0"><div style="padding:8px 14px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between"><h3 style="font-size:12px;font-weight:700">🚌 Bus #07</h3><span class="dot-live" style="width:5px;height:5px"></span></div>
-<div style="display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px solid rgba(37,99,235,.05);font-size:11px"><span style="color:var(--muted)">Latitude</span><span style="font-family:var(--mono);font-weight:600" id="dLat">33.971590</span></div>
-<div style="display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px solid rgba(37,99,235,.05);font-size:11px"><span style="color:var(--muted)">Longitude</span><span style="font-family:var(--mono);font-weight:600" id="dLon">-6.849813</span></div>
-<div style="display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px solid rgba(37,99,235,.05);font-size:11px"><span style="color:var(--muted)">Speed</span><span style="font-family:var(--mono);color:#22c55e;font-weight:600" id="dSpd">38.5 km/h</span></div>
-<div style="display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px solid rgba(37,99,235,.05);font-size:11px"><span style="color:var(--muted)">Distance</span><span style="font-family:var(--mono);color:var(--cyan-l);font-weight:600" id="dDist">1250 m</span></div>
-<div style="display:flex;justify-content:space-between;padding:7px 14px;font-size:11px"><span style="color:var(--muted)">ETA</span><span style="font-family:var(--mono);color:#fbbf24;font-weight:600" id="dETA">2 min</span></div>
-</div>
-<div class="card" style="padding:14px"><h3 style="font-size:11px;font-weight:700;margin-bottom:10px">📶 LoRa Signal</h3>
-<div style="display:flex;align-items:flex-end;gap:4px;height:28px" id="sigBars"><div style="width:10px;height:6px;background:#22c55e;border-radius:2px"></div><div style="width:10px;height:12px;background:#22c55e;border-radius:2px"></div><div style="width:10px;height:18px;background:#22c55e;border-radius:2px"></div><div style="width:10px;height:24px;background:var(--blue-xl);border-radius:2px"></div><div style="width:10px;height:28px;background:#1e3a6e;border-radius:2px"></div></div>
-<p style="font-size:9px;color:#3d6494;font-family:var(--mono);margin-top:5px;direction:ltr" id="sigRSSI">RSSI: -87 dBm | SNR: 8.5 dB</p></div>
-</div></div>
-</div>
-</div>
-
-<!-- S16: FUTURE -->
-<div class="slide" data-s="16">
-<div style="max-width:1000px;padding:0 40px;width:100%">
-<div style="text-align:center;margin-bottom:28px">
-<span class="a-up tag tag-amber">🚀 Future Prospects</span>
-<h2 class="a-up d1" style="font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1;margin-top:12px">Project <span style="color:rgba(255,255,255,.3)">Future</span></h2>
-</div>
-<div class="a-up d2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.2);display:flex;align-items:center;justify-content:center;font-size:22px">📱</div><div><h3 style="font-size:15px;font-weight:700">Mobile Application</h3></div></div><p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">Creating a <strong style="color:#fff">standalone mobile app</strong> for passengers instead of the web interface to enhance user experience.</p><div style="display:flex;gap:6px"><span style="padding:3px 8px;background:rgba(96,165,250,.08);border-radius:5px;font-size:9px;color:var(--blue-xl)">Push Notifications</span><span style="padding:3px 8px;background:rgba(96,165,250,.08);border-radius:5px;font-size:9px;color:var(--blue-xl)">Offline Mode</span></div></div>
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.2);display:flex;align-items:center;justify-content:center;font-size:22px">🌍</div><div><h3 style="font-size:15px;font-weight:700">City-Wide Coverage</h3></div></div><p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">With <strong style="color:#fff">funding</strong>, expand nodes to cover the <strong style="color:#4ade80">entire city</strong> — and why not <strong style="color:#4ade80">all of Morocco</strong>.</p><div style="display:flex;gap:6px"><span style="padding:3px 8px;background:rgba(34,197,94,.08);border-radius:5px;font-size:9px;color:#4ade80">Mesh Expansion</span><span style="padding:3px 8px;background:rgba(34,197,94,.08);border-radius:5px;font-size:9px;color:#4ade80">Scalable</span></div></div>
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.2);display:flex;align-items:center;justify-content:center;font-size:22px">🌡️</div><div><h3 style="font-size:15px;font-weight:700">Additional Sensors</h3></div></div><p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">Integrating sensors to measure bus <strong style="color:#fff">temperature</strong> or monitor <strong style="color:#fff">driver's behavior</strong> for safety.</p><div style="display:flex;gap:6px"><span style="padding:3px 8px;background:rgba(251,146,60,.08);border-radius:5px;font-size:9px;color:#fb923c">Temperature</span><span style="padding:3px 8px;background:rgba(251,146,60,.08);border-radius:5px;font-size:9px;color:#fb923c">Driver Monitor</span></div></div>
-<div class="card" style="padding:22px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.2);display:flex;align-items:center;justify-content:center;font-size:22px">📡</div><div><h3 style="font-size:15px;font-weight:700">Wider Coverage</h3></div></div><p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">LoRa's range extends for <strong style="color:#c084fc">kilometers</strong> — ideal for <strong style="color:#c084fc">rural or open areas</strong> where traditional connectivity fails.</p><div style="display:flex;gap:6px"><span style="padding:3px 8px;background:rgba(168,85,247,.08);border-radius:5px;font-size:9px;color:#c084fc">Rural Areas</span><span style="padding:3px 8px;background:rgba(168,85,247,.08);border-radius:5px;font-size:9px;color:#c084fc">No Infrastructure</span></div></div>
-</div>
-</div>
-</div>
-
-<!-- S17: LIVE CREDS -->
-<div class="slide" data-s="17">
-<div style="max-width:480px;padding:0 40px;text-align:center">
-<div class="a-scale"><div style="width:72px;height:72px;border-radius:22px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);display:flex;align-items:center;justify-content:center;margin:0 auto 18px"><span style="width:16px;height:16px;background:#22c55e;border-radius:50%;display:block;animation:blink 2s infinite;box-shadow:0 0 14px rgba(34,197,94,.5)"></span></div></div>
-<h2 class="a-up d1" style="font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1">Project <span style="color:#4ade80">Live</span></h2>
-<p class="a-up d2" style="font-size:13px;color:var(--muted);margin-top:6px">Connect to the live dashboard</p>
-<div class="a-up d3" style="margin-top:24px"><div class="card" style="padding:24px;text-align:left">
-<div style="margin-bottom:16px"><p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#3d6494;margin-bottom:6px">Network SSID</p><div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:12px"><span style="font-size:16px">📶</span><span style="font-family:var(--mono);font-size:14px;font-weight:600">BusTrackerAP</span><button onclick="copyText('BusTrackerAP',this)" style="margin-left:auto;width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:14px">📋</button></div></div>
-<div><p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#3d6494;margin-bottom:6px">Password</p><div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:12px"><span style="font-size:16px">🔒</span><span style="font-family:var(--mono);font-size:14px;font-weight:600">safarimakers</span><button onclick="copyText('safarimakers',this)" style="margin-left:auto;width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:14px">📋</button></div></div>
-<div style="margin-top:12px;padding:12px 16px;background:rgba(37,99,235,.06);border:1px solid var(--border2);border-radius:10px"><p style="font-size:11px;color:var(--blue-xl)"><strong>Steps:</strong> ① Connect to WiFi → ② Open browser → ③ Go to ESP32 IP → ④ View dashboard</p></div>
-</div></div>
-</div>
-</div>
-
-<!-- S18: SUMMARY -->
-<div class="slide" data-s="18">
-<div style="max-width:960px;padding:0 40px;width:100%">
-<div style="text-align:center;margin-bottom:28px">
-<span class="a-up tag">📊 Summary</span>
-<h2 class="a-up d1" style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.1;margin-top:12px">Key <span class="gt">Takeaways</span></h2>
-</div>
-<div class="a-up d2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
-<div class="stat-card"><div class="stat-num">5km+</div><div class="stat-unit">LoRa Range</div><div class="stat-label">Without mesh</div></div>
-<div class="stat-card"><div class="stat-num">$0</div><div class="stat-unit">Monthly Cost</div><div class="stat-label">No SIM needed</div></div>
-<div class="stat-card"><div class="stat-num">5</div><div class="stat-unit">Challenges Solved</div><div class="stat-label">Unique solutions</div></div>
-<div class="stat-card"><div class="stat-num">2</div><div class="stat-unit">Devices</div><div class="stat-label">Bus + Station</div></div>
-</div>
-<div class="a-up d3" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">LoRa replaces cellular</p><p style="font-size:11px;color:#3d6494;line-height:1.5">No fees, works in rural areas, low power</p></div></div>
-<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">Mesh extends coverage</p><p style="font-size:11px;color:#3d6494;line-height:1.5">Multi-hop, fault tolerant, scalable</p></div></div>
-<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">Bus ID prevents interference</p><p style="font-size:11px;color:#3d6494;line-height:1.5">Unique ID in every packet</p></div></div>
-<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">ACK ensures delivery</p><p style="font-size:11px;color:#3d6494;line-height:1.5">Auto-retry — no silent loss</p></div></div>
-<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">Haversine calculates distance</p><p style="font-size:11px;color:#3d6494;line-height:1.5">Earth-aware, 99.9% accurate</p></div></div>
-<div class="card" style="padding:16px;display:flex;align-items:start;gap:12px"><div class="step-badge" style="margin-top:2px">✓</div><div><p style="font-weight:700;font-size:12px;margin-bottom:3px">Dual display output</p><p style="font-size:11px;color:#3d6494;line-height:1.5">TFT screen + web interface</p></div></div>
-</div>
-</div>
-</div>
-
-<!-- S19: THANK YOU -->
-<div class="slide" data-s="19">
-<div style="max-width:580px;padding:0 40px;text-align:center">
-<div class="a-scale"><div class="glow-icon blue" style="margin:0 auto 24px;animation:float 6s ease-in-out infinite">📡</div></div>
-<h2 class="a-up d2" style="font-size:clamp(2.5rem,7vw,4.5rem);font-weight:700;line-height:.95;background:linear-gradient(135deg,#fff,#93c5fd,var(--cyan-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Thank You</h2>
-<p class="a-up d3" style="font-size:15px;color:var(--muted);margin-top:14px;line-height:1.7">We look forward to your<br>questions and inquiries.</p>
-<div class="a-fade d5" style="display:flex;justify-content:center;gap:10px;margin-top:24px">
-<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 16px rgba(168,85,247,.2)">OA</div>
-<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 16px rgba(59,130,246,.2)">RG</div>
-<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#10b981,#14b8a6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 16px rgba(16,185,129,.2)">IF</div>
-</div>
-<div class="a-fade d6" style="font-size:11px;color:rgba(255,255,255,.22);margin-top:8px">Oussama El Assiri · Rayan El Ghazali · Imran El Fachtioui</div>
-<div class="a-fade d7" style="margin-top:18px;padding:10px 20px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:999px;display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)"><span>Team</span><strong style="color:var(--white)">SAFARIMAKERS</strong><span>·</span><span>Supervised by Mohamed Abdelake</span></div>
-<div class="a-fade d9" style="margin-top:28px;font-size:10px;color:rgba(255,255,255,.1)">Press ← to go back</div>
-</div>
+  <div style="max-width:800px;padding:0 40px;text-align:center">
+    <div class="anim-scale"><div style="width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 32px;box-shadow:0 0 50px rgba(37,99,235,.4);animation:float 6s ease-in-out infinite">📡</div></div>
+    <h2 class="anim-up d2 heading-xl">Project <span class="text-gradient">Live</span></h2>
+    <p class="anim-up d3" style="font-size:16px;color:var(--muted);margin:20px auto 0;line-height:1.7">Connect to the live system dashboard:</p>
+    <div class="anim-up d4" style="margin-top:32px;display:flex;flex-direction:column;gap:16px;max-width:400px;margin-left:auto;margin-right:auto">
+      <div class="glass" style="padding:18px 24px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;color:var(--muted)">SSID:</span>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--white)">BusTrackerAP</span>
+      </div>
+      <div class="glass" style="padding:18px 24px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;color:var(--muted)">Password:</span>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--white)">safarimakers</span>
+      </div>
+    </div>
+    <div class="anim-up d6" style="margin-top:60px">
+      <h3 style="font-size:clamp(1.5rem, 3vw, 2.2rem);font-weight:700;margin-bottom:12px">Thank you for your attention</h3>
+      <p style="font-size:15px;color:var(--muted);line-height:1.6">We look forward to your questions and inquiries.</p>
+    </div>
+  </div>
 </div>
 
 </div><!-- /deck -->
 
 <script>
-var slides=document.querySelectorAll('.slide');
-var total=slides.length;
-var cur=0;
-var pbar=document.getElementById('pbar');
-var sNum=document.getElementById('sNum');
-var cFill=document.getElementById('cFill');
-var prevBtn=document.getElementById('prevBtn');
-var nextBtn=document.getElementById('nextBtn');
-var kbHint=document.getElementById('kbHint');
-sTotal.textContent=String(total).padStart(2,'0');
+// Core Navigation Logic
+var slides = document.querySelectorAll('.slide');
+var total = slides.length;
+var cur = 0;
+var pbar = document.getElementById('pbar');
+var sNum = document.getElementById('sNum');
+var cFill = document.getElementById('cFill');
+var prevBtn = document.getElementById('prevBtn');
+var nextBtn = document.getElementById('nextBtn');
+var kbHint = document.getElementById('kbHint');
+var sTotal = document.getElementById('sTotal');
 
-function go(i){
-  if(i<0||i>=total)return;
+if(sTotal) sTotal.textContent = String(total).padStart(2, '0');
+
+function go(i) {
+  if (i < 0 || i >= total) return;
+
+  // Reset animations on current slide
   slides[cur].classList.remove('active');
-  var els=slides[cur].querySelectorAll('.a-up,.a-fade,.a-scale,.a-left,.a-right');
-  for(var e=0;e<els.length;e++){els[e].style.animation='none';els[e].offsetHeight;els[e].style.animation='';}
-  cur=i;
+  var els = slides[cur].querySelectorAll('.anim-up,.anim-fade,.anim-scale,.anim-left,.anim-right');
+  for (var e = 0; e < els.length; e++) {
+    els[e].style.animation = 'none';
+    els[e].offsetHeight; // Force reflow
+    els[e].style.animation = '';
+  }
+
+  cur = i;
   slides[cur].classList.add('active');
-  var pct=cur/(total-1)*100;
-  pbar.style.width=pct+'%';
-  sNum.textContent=String(cur+1).padStart(2,'0');
-  cFill.style.width=pct+'%';
-  prevBtn.classList.toggle('vis',cur>0);
-  nextBtn.classList.toggle('vis',cur<total-1);
-  kbHint.style.opacity=cur===0?'1':'0';
+
+  // Update UI
+  var pct = (cur / (total - 1)) * 100;
+  if(pbar) pbar.style.width = pct + '%';
+  if(sNum) sNum.textContent = String(cur + 1).padStart(2, '0');
+  if(cFill) cFill.style.width = pct + '%';
+
+  // Toggle Button Visibility
+  if(prevBtn) prevBtn.classList.toggle('vis', cur > 0);
+  if(nextBtn) nextBtn.classList.toggle('vis', cur < total - 1);
+  if(kbHint) kbHint.style.opacity = cur === 0 ? '1' : '0';
 }
 
-nextBtn.addEventListener('click',function(){go(cur+1)});
-prevBtn.addEventListener('click',function(){go(cur-1)});
-document.addEventListener('keydown',function(e){
-  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();go(cur+1)}
-  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(cur-1)}
-  if(e.key==='Home'){e.preventDefault();go(0)}
-  if(e.key==='End'){e.preventDefault();go(total-1)}
+// Event Listeners
+if(nextBtn) nextBtn.addEventListener('click', function() { go(cur + 1); });
+if(prevBtn) prevBtn.addEventListener('click', function() { go(cur - 1); });
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(cur + 1); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); go(cur - 1); }
+  if (e.key === 'Home') { e.preventDefault(); go(0); }
+  if (e.key === 'End') { e.preventDefault(); go(total - 1); }
 });
 
-var tx=0,ty=0;
-document.addEventListener('touchstart',function(e){tx=e.changedTouches[0].screenX;ty=e.changedTouches[0].screenY},{passive:true});
-document.addEventListener('touchend',function(e){
-  var dx=e.changedTouches[0].screenX-tx;
-  var dy=e.changedTouches[0].screenY-ty;
-  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50){dx<0?go(cur+1):go(cur-1)}
-},{passive:true});
+// Touch Swipe Support
+var tx = 0, ty = 0;
+document.addEventListener('touchstart', function(e) { tx = e.changedTouches[0].screenX; ty = e.changedTouches[0].screenY; }, {passive: true});
+document.addEventListener('touchend', function(e) {
+  var dx = e.changedTouches[0].screenX - tx;
+  var dy = e.changedTouches[0].screenY - ty;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) { dx < 0 ? go(cur + 1) : go(cur - 1); }
+}, {passive: true});
 
-function copyText(t,btn){
-  navigator.clipboard.writeText(t).then(function(){
-    var toast=document.getElementById('toast');
-    toast.textContent='Copied: "'+t+'"';
-    toast.classList.add('show');
-    setTimeout(function(){toast.classList.remove('show')},2000);
-    btn.textContent='✓';
-    setTimeout(function(){btn.textContent='📋'},1200);
-  });
-}
-
+// Initialize First Slide
 go(0);
-
-// Mesh Canvas
-(function(){
-  var c=document.getElementById('meshCanvas');if(!c)return;
-  var ctx=c.getContext('2d');
-  function resize(){c.width=c.offsetWidth;c.height=c.offsetHeight}
-  resize();window.addEventListener('resize',resize);
-  var nodes=[{x:.12,y:.3,type:'bus',label:'Bus #07'},{x:.38,y:.58,type:'relay',label:'Node 2'},{x:.6,y:.22,type:'relay',label:'Node 3'},{x:.65,y:.68,type:'relay',label:'Node 4'},{x:.88,y:.45,type:'station',label:'Station'}];
-  var edges=[[0,1],[0,2],[1,2],[1,3],[2,4],[3,4],[1,4]];
-  var pkt={e:0,p:0};
-  function draw(){
-    var W=c.width,H=c.height;ctx.clearRect(0,0,W,H);
-    for(var i=0;i<edges.length;i++){var a=nodes[edges[i][0]],b=nodes[edges[i][1]];ctx.beginPath();ctx.moveTo(a.x*W,a.y*H);ctx.lineTo(b.x*W,b.y*H);ctx.strokeStyle='rgba(37,99,235,.15)';ctx.lineWidth=1.5;ctx.stroke()}
-    pkt.p+=.006;if(pkt.p>=1){pkt.e=(pkt.e+1)%edges.length;pkt.p=0}
-    var pa=nodes[edges[pkt.e][0]],pb=nodes[edges[pkt.e][1]];
-    var px=(pa.x+(pb.x-pa.x)*pkt.p)*W,py=(pa.y+(pb.y-pa.y)*pkt.p)*H;
-    ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fillStyle='#22d3ee';ctx.shadowBlur=10;ctx.shadowColor='#22d3ee';ctx.fill();ctx.shadowBlur=0;
-    for(var j=0;j<nodes.length;j++){
-      var n=nodes[j],x=n.x*W,y=n.y*H,isS=n.type==='station',isB=n.type==='bus',r=isS?16:13;
-      if(isB){var pulse=.5+.5*Math.sin(Date.now()*.003);ctx.beginPath();ctx.arc(x,y,r+5+pulse*4,0,Math.PI*2);ctx.strokeStyle='rgba(37,99,235,'+(0.1+pulse*0.08)+')';ctx.lineWidth=1;ctx.stroke()}
-      ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=isS?'rgba(34,197,94,.12)':'rgba(37,99,235,.12)';ctx.fill();ctx.strokeStyle=isS?'#22c55e':'#3b82f6';ctx.lineWidth=1.5;ctx.stroke();
-      ctx.font=(isS?'12':'10')+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(isB?'🚌':isS?'🏢':'📻',x,y);
-      ctx.font='8px sans-serif';ctx.fillStyle='#3d6494';ctx.fillText(n.label,x,y+r+9);
-    }
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
-
-// Live Demo Sim
-(function(){
-  var busEl=document.getElementById('mapBus');if(!busEl)return;
-  var path=[{t:35,l:28},{t:36,l:35},{t:37,l:42},{t:36,l:50},{t:35,l:58},{t:35,l:65},{t:36,l:71}];
-  var idx=0;
-  setInterval(function(){
-    idx=(idx+1)%path.length;
-    busEl.style.top=path[idx].t+'%';
-    busEl.style.left=path[idx].l+'%';
-    var progress=idx/(path.length-1);
-    var dist=Math.round(1500-progress*1200);
-    var spd=(35+Math.random()*10).toFixed(1);
-    var eta=Math.max(1,Math.round(dist/1000/(+spd/60)));
-    document.getElementById('dLat').textContent=(33.971590+progress*0.004).toFixed(6);
-    document.getElementById('dLon').textContent=(-6.849813+progress*0.008).toFixed(6);
-    document.getElementById('dSpd').textContent=spd+' km/h';
-    document.getElementById('dDist').textContent=dist+' m';
-    document.getElementById('dETA').textContent=eta+' min';
-    var rssi=-75-Math.round(progress*25)-Math.round(Math.random()*5);
-    var snr=(12-progress*5+(Math.random()*2-1)).toFixed(1);
-    document.getElementById('sigRSSI').textContent='RSSI: '+rssi+' dBm | SNR: '+snr+' dB';
-    var bars=document.querySelectorAll('#sigBars div');
-    var strength=Math.max(1,5-Math.round(progress*2));
-    for(var i=0;i<bars.length;i++){bars[i].style.background=i<strength?(i<3?'#22c55e':'var(--blue-xl)'):'#1e3a6e'}
-  },2500);
-})();
 </script>
 </body>
 </html>
